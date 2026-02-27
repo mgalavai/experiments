@@ -665,6 +665,75 @@
   font-family: var(--font-ui);
 }
 
+.textile-loop-slot {
+  position: absolute;
+  top: 58%;
+  right: -1px;
+  width: 8px;
+  height: 44px;
+  transform: translateY(-50%);
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(180deg, #8d8e92 0%, #b5b6b8 24%, #7d7e83 54%, #b9babd 100%);
+  box-shadow:
+    inset 1px 0 1px rgb(255 255 255 / 30%),
+    inset -1px 0 2px rgb(0 0 0 / 28%);
+  z-index: 6;
+}
+
+.textile-loop-bridge {
+  position: absolute;
+  top: 58%;
+  right: -11px;
+  width: 12px;
+  height: 38px;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #f39131 0%, #e56e16 100%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 30%),
+    inset 0 -1px 2px rgb(0 0 0 / 24%);
+  z-index: 5;
+}
+
+.textile-loop {
+  position: absolute;
+  top: 58%;
+  right: -34px;
+  width: 36px;
+  height: 116px;
+  transform: translateY(-50%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffb460 0%, #f07f22 26%, #e36214 58%, #ca4e0b 100%);
+  box-shadow:
+    0 8px 14px rgb(0 0 0 / 20%),
+    inset 0 2px 2px rgb(255 255 255 / 30%),
+    inset 0 -2px 3px rgb(0 0 0 / 20%);
+  z-index: 4;
+}
+
+.textile-loop::before {
+  content: '';
+  position: absolute;
+  inset: 12px 9px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #cc5b11 0%, #b24408 100%);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 20%);
+}
+
+.textile-loop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(255 255 255 / 14%) 0 2px,
+    rgb(0 0 0 / 8%) 2px 4px
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0.6;
+}
+
 @media (max-width: 1120px) {
   .tedmx-page {
     align-items: flex-start;
