@@ -65,6 +65,10 @@ body {
   background: rgb(0 0 0 / 8%);
 }
 
+.app-nav a[aria-current='page'] {
+  background: rgb(0 0 0 / 12%);
+}
+
 .digital-key-page {
   width: 100%;
   min-height: 100vh;

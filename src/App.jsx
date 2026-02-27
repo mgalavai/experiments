@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import { Agentation } from 'agentation'
 import DigitalKeyPage from './components/DigitalKeyPage'
 import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
@@ -6,8 +6,8 @@ import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 function TopNav() {
   return (
     <nav className="app-nav" aria-label="Views">
-      <Link to="/digital-key">Digital Key</Link>
-      <Link to="/te-dmx">TE-DMX Controller</Link>
+      <NavLink to="/digital-key">Digital Key</NavLink>
+      <NavLink to="/te-dmx">TE-DMX Controller</NavLink>
     </nav>
   )
 }
