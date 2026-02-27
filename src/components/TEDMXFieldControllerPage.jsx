@@ -444,7 +444,7 @@ export default function TEDMXFieldControllerPage() {
     5: { x: 0, y: 0 },
   })
   const audioRef = useRef(null)
-  const animationRef = useRef(0)
+  const schedulerRef = useRef(0)
   const vibeRef = useRef({
     root: 164.81,
     presetKey: 'lofi',
@@ -467,9 +467,9 @@ export default function TEDMXFieldControllerPage() {
   })
 
   const stopAudio = useCallback(() => {
-    if (animationRef.current) {
-      window.cancelAnimationFrame(animationRef.current)
-      animationRef.current = 0
+    if (schedulerRef.current) {
+      window.clearInterval(schedulerRef.current)
+      schedulerRef.current = 0
     }
     const audio = audioRef.current
     if (!audio) return
@@ -488,6 +488,17 @@ export default function TEDMXFieldControllerPage() {
   }, [])
 
   useEffect(() => () => stopAudio(), [stopAudio])
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      const audio = audioRef.current
+      if (!audio) return
+      if (document.visibilityState === 'visible' && audio.context.state === 'suspended') {
+        audio.context.resume().catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
   useEffect(() => {
     fadersRef.current = faders
   }, [faders])
@@ -604,7 +615,7 @@ export default function TEDMXFieldControllerPage() {
     const tempo = lerp(48, 220, fxRateX)
     vibeRef.current.tempo = tempo
     const stepLength = (60 / tempo) / 4
-    const horizon = now + 0.2
+    const horizon = now + (document.visibilityState === 'hidden' ? 2.8 : 0.35)
     const gateBase = ledState[3] ? lerp(vibeRef.current.gateRange[0], vibeRef.current.gateRange[1], controls.gate) : 0.14
     const gateRaw = clamp(gateBase * lerp(0.35, 1.55, dimmerX), 0.08, 1.28)
     const gate = mode === 'house'
@@ -732,7 +743,12 @@ export default function TEDMXFieldControllerPage() {
         : feedbackBase
     audio.params.feedback.gain.setTargetAtTime(feedback, now, 0.12)
 
-    animationRef.current = window.requestAnimationFrame(tickAudio)
+  }
+
+  const startAudioScheduler = () => {
+    if (schedulerRef.current) return
+    tickAudio()
+    schedulerRef.current = window.setInterval(tickAudio, 80)
   }
 
   const applyPreset = (presetKey, withVariation = true) => {
@@ -781,7 +797,7 @@ export default function TEDMXFieldControllerPage() {
     if (audioRef.current) return
     await createAudioGraph()
     setIsAudioRunning(true)
-    if (!animationRef.current) tickAudio()
+    startAudioScheduler()
   }
 
   const handlePresetClick = async (presetKey) => {
