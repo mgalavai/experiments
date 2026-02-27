@@ -32,6 +32,7 @@ const CHANNEL_LIGHT_INFO = [
 const PRESET_CONFIGS = {
   lofi: {
     label: 'LO-FI',
+    mode: 'lofi',
     scales: ['dorian', 'pentatonic', 'major'],
     tempo: [82, 100],
     rootPool: [110, 130.81, 146.83],
@@ -55,16 +56,17 @@ const PRESET_CONFIGS = {
   },
   synthwave: {
     label: 'SYNTH',
+    mode: 'synth',
     scales: ['major', 'lydian'],
     tempo: [98, 122],
     rootPool: [130.81, 146.83, 164.81, 196],
     melodyPatterns: [
-      [0, 4, 5, 7, 5, 4, 2, 4, 0, 4, 7, 9, 7, 5, 4, 2],
-      [0, 2, 4, 7, 9, 7, 5, 4, 2, 4, 7, 9, 11, 9, 7, 4],
+      [0, 2, 4, 7, 11, 9, 7, 4, 2, 4, 7, 9, 11, 14, 12, 9],
+      [0, 4, 7, 11, 9, 7, 4, 2, 0, 2, 4, 7, 9, 11, 14, 12],
     ],
     bassPatterns: [
-      [0, null, 0, null, 3, null, 3, null, 4, null, 4, null, 2, null, 2, null],
-      [0, null, null, null, 4, null, null, null, 5, null, null, null, 3, null, null, null],
+      [0, null, null, 0, 4, null, null, 4, 5, null, null, 5, 4, null, null, 2],
+      [0, null, 0, null, 4, null, 4, null, 5, null, 5, null, 4, null, 2, null],
     ],
     leadType: 'sawtooth',
     leadHarmonic: 1.5,
@@ -74,20 +76,21 @@ const PRESET_CONFIGS = {
     gate: [0.48, 0.88],
     density: [0.82, 1],
     swing: [0, 0.06],
-    faders: [58, 67, 36, 62, 76, 40, 44, 46],
+    faders: [58, 70, 42, 72, 84, 48, 74, 68],
   },
   house: {
     label: 'HOUSE',
+    mode: 'house',
     scales: ['major', 'dorian', 'pentatonic'],
     tempo: [118, 132],
     rootPool: [110, 130.81, 146.83],
     melodyPatterns: [
-      [0, 2, 4, 5, 4, 2, 4, 7, 5, 4, 2, 4, 7, 9, 7, 5],
-      [0, 4, 5, 7, 5, 4, 2, 4, 5, 7, 9, 7, 5, 4, 2, 0],
+      [0, null, 4, null, 0, null, 5, null, 0, null, 4, null, 0, null, 7, null],
+      [0, null, 3, null, 0, null, 5, null, 0, null, 3, null, 0, null, 7, null],
     ],
     bassPatterns: [
-      [0, null, 0, null, 3, null, 3, null, 4, null, 4, null, 3, null, 3, null],
-      [0, null, null, null, 4, null, null, null, 5, null, null, null, 4, null, null, null],
+      [0, null, null, null, 0, null, null, null, 3, null, null, null, 4, null, null, null],
+      [0, null, null, null, 3, null, null, null, 4, null, null, null, 3, null, null, null],
     ],
     leadType: 'square',
     leadHarmonic: 2,
@@ -97,10 +100,11 @@ const PRESET_CONFIGS = {
     gate: [0.32, 0.62],
     density: [0.9, 1],
     swing: [0, 0.04],
-    faders: [62, 64, 40, 46, 90, 52, 46, 44],
+    faders: [62, 58, 36, 34, 94, 52, 20, 14],
   },
   ambient: {
     label: 'AMBIENT',
+    mode: 'ambient',
     scales: ['major', 'lydian', 'pentatonic'],
     tempo: [60, 84],
     rootPool: [110, 130.81, 164.81],
@@ -444,6 +448,7 @@ export default function TEDMXFieldControllerPage() {
   const vibeRef = useRef({
     root: 164.81,
     presetKey: 'lofi',
+    mode: PRESET_CONFIGS.lofi.mode,
     scaleName: 'major',
     scaleIntervals: SCALE_BY_NAME.major,
     melodyPattern: PRESET_CONFIGS.lofi.melodyPatterns[0],
@@ -592,6 +597,7 @@ export default function TEDMXFieldControllerPage() {
   }
 
   const scheduleMelodyNotes = (audio, now, controls, joys, ledState) => {
+    const mode = vibeRef.current.mode
     const fxRateX = clamp((joys[4].x + 1) / 2, 0, 1)
     const dimmerX = clamp((joys[3].x + 1) / 2, 0, 1)
     const panY = clamp((joys[1].y + 1) / 2, 0, 1)
@@ -600,9 +606,19 @@ export default function TEDMXFieldControllerPage() {
     const stepLength = (60 / tempo) / 4
     const horizon = now + 0.2
     const gateBase = ledState[3] ? lerp(vibeRef.current.gateRange[0], vibeRef.current.gateRange[1], controls.gate) : 0.14
-    const gate = clamp(gateBase * lerp(0.35, 1.55, dimmerX), 0.08, 1.28)
+    const gateRaw = clamp(gateBase * lerp(0.35, 1.55, dimmerX), 0.08, 1.28)
+    const gate = mode === 'house'
+      ? clamp(gateRaw * 0.58, 0.08, 0.58)
+      : mode === 'synth'
+        ? clamp(gateRaw * 1.22, 0.2, 1.4)
+        : gateRaw
     const densityBase = ledState[4] ? lerp(vibeRef.current.densityRange[0], vibeRef.current.densityRange[1], controls.density) : 0.08
-    const density = clamp(densityBase + (ledState[4] ? joys[3].y * 0.45 : 0), 0.08, 1)
+    const densityRaw = clamp(densityBase + (ledState[4] ? joys[3].y * 0.45 : 0), 0.08, 1)
+    const density = mode === 'house'
+      ? clamp(densityRaw + 0.25, 0.3, 1)
+      : mode === 'synth'
+        ? clamp(densityRaw + 0.08, 0.2, 1)
+        : densityRaw
     const octaveLiftChance = ledState[5] ? lerp(0.08, 0.42, controls.octave) : 0
     const stereoWidth = lerp(0.1, 0.98, panY)
     const transpose = Math.round(joys[1].x * 12)
@@ -618,25 +634,38 @@ export default function TEDMXFieldControllerPage() {
       const bassIdx = vibeRef.current.bassPattern[step]
       const t = vibeRef.current.nextNoteTime
 
-      if (noteIdx !== null && Math.random() < density) {
+      const housePulseStep = step % 4 === 1 || step % 4 === 3
+      const leadGate = mode === 'house' ? housePulseStep : true
+      if (noteIdx !== null && leadGate && Math.random() < density) {
         const interval = vibeRef.current.scaleIntervals[noteIdx % vibeRef.current.scaleIntervals.length]
         const octaveJump = Math.random() < octaveLiftChance ? 12 : 0
         const freq = vibeRef.current.root * 2 ** ((interval + octaveJump + transpose) / 12)
-        const level = lerp(vibeRef.current.leadLevelRange[0], vibeRef.current.leadLevelRange[1], controls.master) * (step % 4 === 0 ? 1.15 : 0.92)
+        const levelBase = lerp(vibeRef.current.leadLevelRange[0], vibeRef.current.leadLevelRange[1], controls.master)
+        const level = mode === 'house'
+          ? levelBase * (step % 4 === 1 ? 1.45 : 0.65)
+          : mode === 'synth'
+            ? levelBase * (step % 4 === 0 ? 1.2 : 0.9)
+            : levelBase * (step % 4 === 0 ? 1.15 : 0.92)
         triggerNote(audio, freq, t, stepLength * gate, {
           type: vibeRef.current.leadType,
           level,
-          pan: (Math.random() * 2 - 1) * stereoWidth,
+          pan: (Math.random() * 2 - 1) * (mode === 'house' ? 0.18 : mode === 'synth' ? 0.85 : stereoWidth),
           harmonic: vibeRef.current.leadHarmonic,
         })
       }
 
-      if (bassIdx !== null && step % 2 === 0) {
+      const bassStep = mode === 'house' ? step % 4 === 0 : step % 2 === 0
+      if (bassIdx !== null && bassStep) {
         const interval = vibeRef.current.scaleIntervals[bassIdx % vibeRef.current.scaleIntervals.length]
         const bassFreq = vibeRef.current.root * 0.5 * 2 ** ((interval + transpose) / 12)
-        triggerNote(audio, bassFreq, t, stepLength * clamp(gate * 1.2, 0.24, 1.1), {
+        const bassDur = mode === 'house'
+          ? stepLength * 0.72
+          : mode === 'synth'
+            ? stepLength * clamp(gate * 1.1, 0.3, 1.2)
+            : stepLength * clamp(gate * 1.2, 0.24, 1.1)
+        triggerNote(audio, bassFreq, t, bassDur, {
           type: vibeRef.current.bassType,
-          level: lerp(vibeRef.current.bassLevelRange[0], vibeRef.current.bassLevelRange[1], controls.master),
+          level: lerp(vibeRef.current.bassLevelRange[0], vibeRef.current.bassLevelRange[1], controls.master) * (mode === 'house' ? 1.2 : 1),
           pan: -0.08,
           harmonic: 1.01,
         })
@@ -665,20 +694,42 @@ export default function TEDMXFieldControllerPage() {
       feedback: valueOr(7, 0),
     }
     const joys = joyState.current
+    const mode = vibeRef.current.mode
     const tiltX = clamp((joys[2].x + 1) / 2, 0, 1)
     const fxRateY = clamp((joys[4].y + 1) / 2, 0, 1)
 
     scheduleMelodyNotes(audio, now, controls, joys, ledState)
 
     audio.params.master.gain.setTargetAtTime(lerp(0.02, 0.34, controls.master), now, 0.08)
-    const cutoff = lerp(260, 7600, controls.filter) + joys[2].y * -4200
+    const cutoffBase = lerp(260, 7600, controls.filter) + joys[2].y * -4200
+    const cutoff = mode === 'house'
+      ? cutoffBase * 0.76
+      : mode === 'synth'
+        ? cutoffBase * 1.18 + 240
+        : cutoffBase
     audio.params.filter.frequency.setTargetAtTime(clamp(cutoff, 220, 9000), now, 0.08)
-    const resonance = clamp(lerp(0.5, 8.5, controls.resonance) + (ledState[2] ? tiltX * 16 : 0), 0.5, 24)
+    const resonanceBoost = mode === 'house' ? 5 : mode === 'synth' ? 2 : 0
+    const resonance = clamp(lerp(0.5, 8.5, controls.resonance) + (ledState[2] ? tiltX * 16 : 0) + resonanceBoost, 0.5, 24)
     audio.params.filter.Q.setTargetAtTime(resonance, now, 0.1)
-    audio.params.delay.delayTime.setTargetAtTime(lerp(0.04, 0.7, fxRateY), now, 0.12)
-    const wetMix = clamp(lerp(0.01, 0.34, controls.wet) + (ledState[6] ? (fxRateY - 0.5) * 0.28 : 0), 0.01, 0.62)
+    const delayTime = mode === 'house'
+      ? lerp(0.02, 0.18, fxRateY)
+      : mode === 'synth'
+        ? lerp(0.2, 0.78, fxRateY)
+        : lerp(0.04, 0.7, fxRateY)
+    audio.params.delay.delayTime.setTargetAtTime(delayTime, now, 0.12)
+    const wetMixBase = clamp(lerp(0.01, 0.34, controls.wet) + (ledState[6] ? (fxRateY - 0.5) * 0.28 : 0), 0.01, 0.62)
+    const wetMix = mode === 'house'
+      ? wetMixBase * 0.4
+      : mode === 'synth'
+        ? clamp(wetMixBase + 0.12, 0.02, 0.72)
+        : wetMixBase
     audio.params.wet.gain.setTargetAtTime(wetMix, now, 0.12)
-    const feedback = clamp(lerp(0.04, 0.52, controls.feedback) + (ledState[7] ? joys[4].x * 0.22 : 0), 0.04, 0.72)
+    const feedbackBase = clamp(lerp(0.04, 0.52, controls.feedback) + (ledState[7] ? joys[4].x * 0.22 : 0), 0.04, 0.72)
+    const feedback = mode === 'house'
+      ? feedbackBase * 0.42
+      : mode === 'synth'
+        ? clamp(feedbackBase + 0.16, 0.08, 0.84)
+        : feedbackBase
     audio.params.feedback.gain.setTargetAtTime(feedback, now, 0.12)
 
     animationRef.current = window.requestAnimationFrame(tickAudio)
@@ -702,6 +753,7 @@ export default function TEDMXFieldControllerPage() {
     vibeRef.current = {
       ...vibeRef.current,
       presetKey,
+      mode: preset.mode,
       root,
       scaleName,
       scaleIntervals,
