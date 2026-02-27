@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const DOT_COUNT = 36
+const KEY_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const KEY_OPTIONS = ['AUTO', ...KEY_NOTE_NAMES]
+const KEY_TO_SEMITONE = Object.fromEntries(KEY_NOTE_NAMES.map((name, idx) => [name, idx]))
 const ENCODERS = [
   { id: 1, label: 'Pan', color: 'blue', size: 42, socket: 64 },
   { id: 2, label: 'Tilt', color: 'ochre', size: 42, socket: 64 },
@@ -24,7 +27,7 @@ const CHANNEL_LIGHT_INFO = [
   'CH3 Resonance',
   'CH4 Note Gate Length',
   'CH5 Note Density',
-  'CH6 Octave Lift Chance',
+  'CH6 Bit Crush Amount',
   'CH7 Delay Mix',
   'CH8 Delay Feedback',
 ]
@@ -138,6 +141,21 @@ function lerp(min, max, amount) {
 
 function frequencyToMidi(frequency) {
   return Math.round(69 + 12 * Math.log2(frequency / 440))
+}
+
+function midiToFrequency(midi) {
+  return 440 * 2 ** ((midi - 69) / 12)
+}
+
+function midiToPitchClass(midi) {
+  const pitch = ((midi % 12) + 12) % 12
+  return KEY_NOTE_NAMES[pitch]
+}
+
+function keyToRootFrequency(keyName) {
+  const semitone = KEY_TO_SEMITONE[keyName]
+  if (semitone === undefined) return 164.81
+  return midiToFrequency(48 + semitone)
 }
 
 function midiToStrudelNote(midi) {
@@ -444,12 +462,16 @@ function FaderBank({ faders, setFaders, setReadout, leds, onToggleLed }) {
 
 export default function TEDMXFieldControllerPage() {
   const [readout, setReadout] = useState('UNI:1 ACTIVE')
+  const [bpmInput, setBpmInput] = useState('104')
+  const [selectedKey, setSelectedKey] = useState('AUTO')
   const [faders, setFaders] = useState(INITIAL_FADERS)
   const [channelLeds, setChannelLeds] = useState([true, true, true, true, true, true, true, true])
   const [isAudioRunning, setIsAudioRunning] = useState(false)
   const [activePreset, setActivePreset] = useState('lofi')
   const [showStrudelCode, setShowStrudelCode] = useState(false)
   const [strudelCode, setStrudelCode] = useState('')
+  const manualBpmRef = useRef(104)
+  const keyOverrideRef = useRef('AUTO')
   const fadersRef = useRef(INITIAL_FADERS)
   const channelLedsRef = useRef([true, true, true, true, true, true, true, true])
   const joyState = useRef({
@@ -521,6 +543,15 @@ export default function TEDMXFieldControllerPage() {
   useEffect(() => {
     channelLedsRef.current = channelLeds
   }, [channelLeds])
+  useEffect(() => {
+    const parsed = Number.parseInt(bpmInput, 10)
+    if (Number.isFinite(parsed)) {
+      manualBpmRef.current = clamp(parsed, 40, 220)
+    }
+  }, [bpmInput])
+  useEffect(() => {
+    keyOverrideRef.current = selectedKey
+  }, [selectedKey])
 
   const createAudioGraph = async () => {
     if (audioRef.current) return audioRef.current
@@ -532,6 +563,9 @@ export default function TEDMXFieldControllerPage() {
     const master = context.createGain()
     const filter = context.createBiquadFilter()
     const compressor = context.createDynamicsCompressor()
+    const clean = context.createGain()
+    const bitCrusher = context.createScriptProcessor(2048, 2, 2)
+    const crushed = context.createGain()
     const dry = context.createGain()
     const delay = context.createDelay(0.8)
     const feedback = context.createGain()
@@ -539,6 +573,8 @@ export default function TEDMXFieldControllerPage() {
 
     voiceBus.gain.value = 1
     master.gain.value = 0.2
+    clean.gain.value = 1
+    crushed.gain.value = 0
     filter.type = 'lowpass'
     filter.frequency.value = 2600
     filter.Q.value = 0.9
@@ -552,9 +588,47 @@ export default function TEDMXFieldControllerPage() {
     feedback.gain.value = 0.22
     wet.gain.value = 0.15
 
+    let crusherBits = 14
+    let crusherNorm = 1
+    const crusherPhase = [0, 0]
+    const crusherHeld = [0, 0]
+    const setBitCrusherAmount = (amount) => {
+      const normalized = clamp(amount, 0, 1)
+      crusherBits = Math.round(lerp(14, 3, normalized))
+      crusherNorm = lerp(1, 0.075, normalized)
+    }
+    setBitCrusherAmount(0)
+
+    bitCrusher.onaudioprocess = (event) => {
+      const channels = Math.min(event.inputBuffer.numberOfChannels, event.outputBuffer.numberOfChannels, 2)
+      const quantStep = 2 ** (-crusherBits)
+      for (let channel = 0; channel < channels; channel += 1) {
+        const input = event.inputBuffer.getChannelData(channel)
+        const output = event.outputBuffer.getChannelData(channel)
+        let phase = crusherPhase[channel]
+        let held = crusherHeld[channel]
+
+        for (let i = 0; i < input.length; i += 1) {
+          phase += crusherNorm
+          if (phase >= 1) {
+            phase -= 1
+            held = quantStep * Math.round(input[i] / quantStep)
+          }
+          output[i] = held
+        }
+
+        crusherPhase[channel] = phase
+        crusherHeld[channel] = held
+      }
+    }
+
     voiceBus.connect(filter)
     filter.connect(compressor)
-    compressor.connect(master)
+    compressor.connect(clean)
+    clean.connect(master)
+    compressor.connect(bitCrusher)
+    bitCrusher.connect(crushed)
+    crushed.connect(master)
     master.connect(dry)
     dry.connect(context.destination)
     master.connect(delay)
@@ -566,11 +640,14 @@ export default function TEDMXFieldControllerPage() {
     audioRef.current = {
       context,
       oscillators: [],
-      nodes: [voiceBus, master, filter, compressor, dry, delay, feedback, wet],
+      nodes: [voiceBus, master, filter, compressor, clean, bitCrusher, crushed, dry, delay, feedback, wet],
       params: {
         voiceBus,
         master,
         filter,
+        clean,
+        crushed,
+        setBitCrusherAmount,
         delay,
         feedback,
         wet,
@@ -628,7 +705,8 @@ export default function TEDMXFieldControllerPage() {
     const fxRateX = clamp((joys[4].x + 1) / 2, 0, 1)
     const dimmerX = clamp((joys[3].x + 1) / 2, 0, 1)
     const panY = clamp((joys[1].y + 1) / 2, 0, 1)
-    const tempo = lerp(48, 220, fxRateX)
+    const baseTempo = manualBpmRef.current
+    const tempo = clamp(baseTempo * lerp(0.75, 1.25, fxRateX), 40, 240)
     vibeRef.current.tempo = tempo
     const stepLength = (60 / tempo) / 4
     const horizon = now + (document.visibilityState === 'hidden' ? 2.8 : 0.35)
@@ -646,7 +724,7 @@ export default function TEDMXFieldControllerPage() {
       : mode === 'synth'
         ? clamp(densityRaw + 0.08, 0.2, 1)
         : densityRaw
-    const octaveLiftChance = ledState[5] ? lerp(0.08, 0.42, controls.octave) : 0
+    const octaveLiftChance = clamp(0.08 + density * 0.24 + Math.max(0, joys[2].x) * 0.1, 0.08, 0.44)
     const stereoWidth = lerp(0.1, 0.98, panY)
     const transpose = Math.round(joys[1].x * 12)
     const swing = clamp(
@@ -716,7 +794,7 @@ export default function TEDMXFieldControllerPage() {
       resonance: valueOr(2, 0),
       gate: valueOr(3, 0),
       density: valueOr(4, 0),
-      octave: valueOr(5, 0),
+      bitCrush: valueOr(5, 0),
       wet: valueOr(6, 0),
       feedback: valueOr(7, 0),
     }
@@ -738,6 +816,10 @@ export default function TEDMXFieldControllerPage() {
     const resonanceBoost = mode === 'house' ? 5 : mode === 'synth' ? 2 : 0
     const resonance = clamp(lerp(0.5, 8.5, controls.resonance) + (ledState[2] ? tiltX * 16 : 0) + resonanceBoost, 0.5, 24)
     audio.params.filter.Q.setTargetAtTime(resonance, now, 0.1)
+    const crushAmount = clamp(controls.bitCrush + (ledState[5] ? tiltX * 0.25 : 0), 0, 1)
+    audio.params.setBitCrusherAmount(crushAmount)
+    audio.params.clean.gain.setTargetAtTime(clamp(1 - crushAmount * 0.74, 0.2, 1), now, 0.07)
+    audio.params.crushed.gain.setTargetAtTime(clamp(crushAmount * 1.08, 0, 1), now, 0.07)
     const delayTime = mode === 'house'
       ? lerp(0.02, 0.18, fxRateY)
       : mode === 'synth'
@@ -776,8 +858,10 @@ export default function TEDMXFieldControllerPage() {
     const melodyTemplate = preset.melodyPatterns[Math.floor(Math.random() * preset.melodyPatterns.length)]
     const bassTemplate = preset.bassPatterns[Math.floor(Math.random() * preset.bassPatterns.length)]
     const shift = withVariation ? Math.floor(Math.random() * 2) : 0
-    const root = preset.rootPool[Math.floor(Math.random() * preset.rootPool.length)]
-    const tempo = Math.round(lerp(preset.tempo[0], preset.tempo[1], Math.random()))
+    const autoRoot = preset.rootPool[Math.floor(Math.random() * preset.rootPool.length)]
+    const keyOverride = keyOverrideRef.current
+    const root = keyOverride === 'AUTO' ? autoRoot : keyToRootFrequency(keyOverride)
+    const tempo = manualBpmRef.current
     const melodyPattern = melodyTemplate.map((step) => (step === null ? null : (step + shift) % scaleIntervals.length))
     const bassPattern = bassTemplate.map((step) => (step === null ? null : (step + shift) % scaleIntervals.length))
     const nextFaders = preset.faders.map((base) => clamp(base + (Math.random() - 0.5) * 12, 0, 100))
@@ -845,6 +929,40 @@ export default function TEDMXFieldControllerPage() {
     joyState.current[id] = { x, y }
   }
 
+  const handleBpmInputChange = (event) => {
+    const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 3)
+    setBpmInput(digitsOnly)
+    if (!digitsOnly) return
+
+    const bpm = clamp(Number.parseInt(digitsOnly, 10), 40, 220)
+    manualBpmRef.current = bpm
+    vibeRef.current.tempo = bpm
+    setReadout(`BPM ${bpm}`)
+  }
+
+  const commitBpmInput = () => {
+    const parsed = Number.parseInt(bpmInput, 10)
+    const bpm = Number.isFinite(parsed) ? clamp(parsed, 40, 220) : manualBpmRef.current
+    setBpmInput(String(bpm))
+    manualBpmRef.current = bpm
+    vibeRef.current.tempo = bpm
+    setReadout(`BPM ${bpm}`)
+  }
+
+  const handleKeySelection = (event) => {
+    const nextKey = event.target.value
+    setSelectedKey(nextKey)
+    keyOverrideRef.current = nextKey
+
+    if (nextKey === 'AUTO') {
+      setReadout('KEY AUTO')
+      return
+    }
+
+    vibeRef.current.root = keyToRootFrequency(nextKey)
+    setReadout(`KEY ${nextKey}`)
+  }
+
   const generateStrudelCode = useCallback(() => {
     const vibe = vibeRef.current
     const rootMidi = frequencyToMidi(vibe.root)
@@ -868,10 +986,13 @@ export default function TEDMXFieldControllerPage() {
     const resonance = (lerp(0.5, 8.5, leds[2] ? normalized[2] : 0)).toFixed(2)
     const gate = (leds[3] ? lerp(vibe.gateRange[0], vibe.gateRange[1], normalized[3]) : 0.14).toFixed(2)
     const density = (leds[4] ? lerp(vibe.densityRange[0], vibe.densityRange[1], normalized[4]) : 0.08).toFixed(2)
+    const crush = (leds[5] ? normalized[5] : 0).toFixed(2)
     const wet = (leds[6] ? lerp(0.01, 0.34, normalized[6]) : 0.01).toFixed(2)
     const feedback = (leds[7] ? lerp(0.04, 0.52, normalized[7]) : 0.04).toFixed(2)
+    const keyLabel = keyOverrideRef.current === 'AUTO' ? midiToPitchClass(rootMidi) : keyOverrideRef.current
 
     return `// Generated from TE-DMX preset: ${PRESET_CONFIGS[vibe.presetKey].label}
+// Key: ${keyLabel} | BPM: ${Math.round(vibe.tempo)} | BitCrush: ${Math.round(Number(crush) * 100)}%
 setcps(${cps})
 
 stack(
@@ -997,10 +1118,39 @@ stack(
               <span className="underhood-kicker">UNDER THE HOOD</span>
               <span className="underhood-title">TE-DMX live Strudel output</span>
             </div>
-            <div className="strudel-actions">
-              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={refreshStrudelCode}>sync</button>
-              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={copyStrudelCode}>copy</button>
-              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={toggleStrudelCode}>deck</button>
+            <div className="underhood-tools">
+              <div className="underhood-controls">
+                <label className="underhood-control">
+                  <span>BPM</span>
+                  <input
+                    type="text"
+                    value={bpmInput}
+                    onChange={handleBpmInputChange}
+                    onBlur={commitBpmInput}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.currentTarget.blur()
+                      }
+                    }}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    aria-label="Tempo BPM"
+                  />
+                </label>
+                <label className="underhood-control">
+                  <span>KEY</span>
+                  <select value={selectedKey} onChange={handleKeySelection} aria-label="Root key">
+                    {KEY_OPTIONS.map((keyOption) => (
+                      <option key={keyOption} value={keyOption}>{keyOption}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="strudel-actions">
+                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={refreshStrudelCode}>sync</button>
+                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={copyStrudelCode}>copy</button>
+                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={toggleStrudelCode}>deck</button>
+              </div>
             </div>
           </div>
           <pre className="underhood-code">{strudelCode}</pre>

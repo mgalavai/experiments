@@ -190,6 +190,48 @@
   gap: 12px;
 }
 
+.underhood-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.underhood-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.underhood-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-tech);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgb(255 255 255 / 62%);
+}
+
+.underhood-control input,
+.underhood-control select {
+  width: 100%;
+  height: 28px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 6px;
+  background: rgb(6 6 7 / 64%);
+  color: #ececec;
+  font-family: var(--font-tech);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 0 8px;
+}
+
+.underhood-control input:focus-visible,
+.underhood-control select:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 35%);
+  outline-offset: 1px;
+}
+
 .underhood-title-wrap {
   display: flex;
   flex-direction: column;
