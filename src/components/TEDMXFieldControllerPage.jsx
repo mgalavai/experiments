@@ -136,6 +136,17 @@ function lerp(min, max, amount) {
   return min + (max - min) * amount
 }
 
+function frequencyToMidi(frequency) {
+  return Math.round(69 + 12 * Math.log2(frequency / 440))
+}
+
+function midiToStrudelNote(midi) {
+  const names = ['c', 'cs', 'd', 'ds', 'e', 'f', 'fs', 'g', 'gs', 'a', 'as', 'b']
+  const pitch = ((midi % 12) + 12) % 12
+  const octave = Math.floor(midi / 12) - 1
+  return `${names[pitch]}${octave}`
+}
+
 function Grille() {
   return (
     <div className="grille" aria-hidden="true">
@@ -146,7 +157,7 @@ function Grille() {
   )
 }
 
-function TinyButtons() {
+function TinyButtons({ onToggleCode }) {
   return (
     <div className="tiny-buttons">
       <button className="btn-round tiny" type="button" aria-label="round indicator">
@@ -158,6 +169,9 @@ function TinyButtons() {
         <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" fill="none">
           <line x1="4" y1="12" x2="20" y2="12" />
         </svg>
+      </button>
+      <button className="btn-round tiny tiny-code" type="button" onClick={onToggleCode} aria-label="Toggle Strudel code">
+        &lt;&gt;
       </button>
     </div>
   )
@@ -434,6 +448,8 @@ export default function TEDMXFieldControllerPage() {
   const [channelLeds, setChannelLeds] = useState([true, true, true, true, true, true, true, true])
   const [isAudioRunning, setIsAudioRunning] = useState(false)
   const [activePreset, setActivePreset] = useState('lofi')
+  const [showStrudelCode, setShowStrudelCode] = useState(false)
+  const [strudelCode, setStrudelCode] = useState('')
   const fadersRef = useRef(INITIAL_FADERS)
   const channelLedsRef = useRef([true, true, true, true, true, true, true, true])
   const joyState = useRef({
@@ -828,6 +844,77 @@ export default function TEDMXFieldControllerPage() {
   const onJoyChange = (id, x, y) => {
     joyState.current[id] = { x, y }
   }
+
+  const generateStrudelCode = useCallback(() => {
+    const vibe = vibeRef.current
+    const rootMidi = frequencyToMidi(vibe.root)
+    const scale = vibe.scaleIntervals
+    const normalized = fadersRef.current.map((value) => clamp(value / 100, 0, 1))
+    const leds = channelLedsRef.current
+
+    const mapPattern = (pattern, octaveOffset) =>
+      pattern
+        .map((step) => {
+          if (step === null) return '~'
+          const interval = scale[step % scale.length]
+          return midiToStrudelNote(rootMidi + interval + octaveOffset)
+        })
+        .join(' ')
+
+    const leadPattern = mapPattern(vibe.melodyPattern, 12)
+    const bassPattern = mapPattern(vibe.bassPattern, -12)
+    const cps = (vibe.tempo / 60 / 4).toFixed(4)
+    const cutoff = Math.round(lerp(260, 7600, leds[1] ? normalized[1] : 0.02))
+    const resonance = (lerp(0.5, 8.5, leds[2] ? normalized[2] : 0)).toFixed(2)
+    const gate = (leds[3] ? lerp(vibe.gateRange[0], vibe.gateRange[1], normalized[3]) : 0.14).toFixed(2)
+    const density = (leds[4] ? lerp(vibe.densityRange[0], vibe.densityRange[1], normalized[4]) : 0.08).toFixed(2)
+    const wet = (leds[6] ? lerp(0.01, 0.34, normalized[6]) : 0.01).toFixed(2)
+    const feedback = (leds[7] ? lerp(0.04, 0.52, normalized[7]) : 0.04).toFixed(2)
+
+    return `// Generated from TE-DMX preset: ${PRESET_CONFIGS[vibe.presetKey].label}
+setcps(${cps})
+
+stack(
+  note("${bassPattern}")
+    .s("${vibe.bassType}")
+    .gain(${(leds[0] ? lerp(vibe.bassLevelRange[0], vibe.bassLevelRange[1], normalized[0]) : 0).toFixed(3)})
+    .lpf(${Math.max(180, Math.round(cutoff * 0.65))})
+    .room(0.05),
+
+  note("${leadPattern}")
+    .s("${vibe.leadType}")
+    .gain(${(leds[0] ? lerp(vibe.leadLevelRange[0], vibe.leadLevelRange[1], normalized[0]) : 0).toFixed(3)})
+    .lpf(${cutoff})
+    .resonance(${resonance})
+    .delay(${wet})
+    .delayfeedback(${feedback})
+    .legato(${gate})
+    .density(${density})
+)`
+  }, [])
+
+  const toggleStrudelCode = () => {
+    if (!showStrudelCode) {
+      setStrudelCode(generateStrudelCode())
+    }
+    setShowStrudelCode((prev) => !prev)
+  }
+
+  const copyStrudelCode = async () => {
+    const code = generateStrudelCode()
+    try {
+      await navigator.clipboard.writeText(code)
+      setStrudelCode(code)
+      setReadout('STRUDEL CODE COPIED')
+    } catch {
+      setReadout('COPY FAILED')
+    }
+  }
+  const refreshStrudelCode = () => {
+    setStrudelCode(generateStrudelCode())
+    setReadout('STRUDEL CODE REFRESHED')
+  }
+
   const toggleChannelLed = (idx) => {
     setChannelLeds((prev) => {
       const next = prev.map((value, i) => (i === idx ? !value : value))
@@ -841,8 +928,20 @@ export default function TEDMXFieldControllerPage() {
       <div className="device-case">
         <section className="section-left">
           <Grille />
-          <TinyButtons />
+          <TinyButtons onToggleCode={toggleStrudelCode} />
           <ScreenDisplay readout={readout} joyState={joyState} />
+          {showStrudelCode && (
+            <div className="strudel-panel">
+              <div className="strudel-panel-head">
+                <span>STRUDEL</span>
+                <div className="strudel-actions">
+                  <button type="button" className="btn-round tiny tiny-code" onClick={refreshStrudelCode}>sync</button>
+                  <button type="button" className="btn-round tiny tiny-code" onClick={copyStrudelCode}>copy</button>
+                </div>
+              </div>
+              <pre>{strudelCode}</pre>
+            </div>
+          )}
           <div className="page-button-row">
             <button
               className={`btn-round page ${activePreset === 'lofi' ? 'active-preset' : ''}`}

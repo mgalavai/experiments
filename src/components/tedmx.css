@@ -94,6 +94,12 @@
   gap: 12px;
 }
 
+.tiny-code {
+  font-family: var(--font-tech);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+}
+
 .screen-display {
   background: var(--screen-bg);
   height: 140px;
@@ -136,6 +142,39 @@
   justify-content: space-between;
   opacity: 0.8;
   background: rgb(0 0 0 / 30%);
+}
+
+.strudel-panel {
+  background: rgb(16 16 16 / 92%);
+  color: #d8d8d8;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: var(--font-tech);
+  font-size: 9px;
+  line-height: 1.35;
+  max-height: 145px;
+  overflow: auto;
+}
+
+.strudel-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.strudel-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.strudel-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .page-button-row {
