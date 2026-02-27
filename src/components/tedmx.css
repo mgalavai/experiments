@@ -165,8 +165,7 @@
   cursor: pointer;
   transition: transform 0.05s ease, box-shadow 0.05s ease;
   position: relative;
-  font-family: var(--font-tech);
-  text-transform: uppercase;
+  font-family: var(--font-ui);
 }
 
 .btn-round.tiny {
