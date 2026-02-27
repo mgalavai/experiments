@@ -29,7 +29,7 @@ const CHANNEL_LIGHT_INFO = [
   'CH5 Note Density',
   'CH6 Bit Crush Amount',
   'CH7 Delay Mix',
-  'CH8 Delay Feedback',
+  'CH8 Tempo BPM',
 ]
 
 const PRESET_CONFIGS = {
@@ -419,7 +419,12 @@ function FaderBank({ faders, setFaders, setReadout, leds, onToggleLed }) {
 
       const nextPercent = (newBottom / maxTravel) * 100
       setFaders((prev) => prev.map((value, idx) => (idx === channel - 1 ? nextPercent : value)))
-      setReadout(`CH:${channel} VAL:${Math.floor((nextPercent / 100) * 255)}`)
+      if (channel === 8) {
+        const bpm = Math.round(lerp(60, 180, nextPercent / 100))
+        setReadout(`BPM:${bpm}`)
+      } else {
+        setReadout(`CH:${channel} VAL:${Math.floor((nextPercent / 100) * 255)}`)
+      }
     }
 
     const onUp = () => {
@@ -700,13 +705,12 @@ export default function TEDMXFieldControllerPage() {
     }
   }
 
-  const scheduleMelodyNotes = (audio, now, controls, joys, ledState) => {
+  const scheduleMelodyNotes = (audio, now, controls, joys, ledState, tempoFromSlider) => {
     const mode = vibeRef.current.mode
     const fxRateX = clamp((joys[4].x + 1) / 2, 0, 1)
     const dimmerX = clamp((joys[3].x + 1) / 2, 0, 1)
     const panY = clamp((joys[1].y + 1) / 2, 0, 1)
-    const baseTempo = manualBpmRef.current
-    const tempo = clamp(baseTempo * lerp(0.75, 1.25, fxRateX), 40, 240)
+    const tempo = clamp(tempoFromSlider * lerp(0.82, 1.18, fxRateX), 40, 240)
     vibeRef.current.tempo = tempo
     const stepLength = (60 / tempo) / 4
     const horizon = now + (document.visibilityState === 'hidden' ? 2.8 : 0.35)
@@ -796,14 +800,14 @@ export default function TEDMXFieldControllerPage() {
       density: valueOr(4, 0),
       bitCrush: valueOr(5, 0),
       wet: valueOr(6, 0),
-      feedback: valueOr(7, 0),
     }
     const joys = joyState.current
     const mode = vibeRef.current.mode
     const tiltX = clamp((joys[2].x + 1) / 2, 0, 1)
     const fxRateY = clamp((joys[4].y + 1) / 2, 0, 1)
+    const tempoFromSlider = ledState[7] ? lerp(60, 180, normalized[7]) : manualBpmRef.current
 
-    scheduleMelodyNotes(audio, now, controls, joys, ledState)
+    scheduleMelodyNotes(audio, now, controls, joys, ledState, tempoFromSlider)
 
     audio.params.master.gain.setTargetAtTime(lerp(0.02, 0.34, controls.master), now, 0.08)
     const cutoffBase = lerp(260, 7600, controls.filter) + joys[2].y * -4200
@@ -833,7 +837,7 @@ export default function TEDMXFieldControllerPage() {
         ? clamp(wetMixBase + 0.12, 0.02, 0.72)
         : wetMixBase
     audio.params.wet.gain.setTargetAtTime(wetMix, now, 0.12)
-    const feedbackBase = clamp(lerp(0.04, 0.52, controls.feedback) + (ledState[7] ? joys[4].x * 0.22 : 0), 0.04, 0.72)
+    const feedbackBase = clamp(lerp(0.04, 0.52, controls.wet) + (ledState[6] ? joys[4].x * 0.18 : 0), 0.04, 0.72)
     const feedback = mode === 'house'
       ? feedbackBase * 0.42
       : mode === 'synth'
@@ -981,18 +985,20 @@ export default function TEDMXFieldControllerPage() {
 
     const leadPattern = mapPattern(vibe.melodyPattern, 12)
     const bassPattern = mapPattern(vibe.bassPattern, -12)
-    const cps = (vibe.tempo / 60 / 4).toFixed(4)
+    const bpmFromSlider = Math.round(lerp(60, 180, normalized[7]))
+    const bpm = leds[7] ? bpmFromSlider : Math.round(vibe.tempo)
+    const cps = (bpm / 60 / 4).toFixed(4)
     const cutoff = Math.round(lerp(260, 7600, leds[1] ? normalized[1] : 0.02))
     const resonance = (lerp(0.5, 8.5, leds[2] ? normalized[2] : 0)).toFixed(2)
     const gate = (leds[3] ? lerp(vibe.gateRange[0], vibe.gateRange[1], normalized[3]) : 0.14).toFixed(2)
     const density = (leds[4] ? lerp(vibe.densityRange[0], vibe.densityRange[1], normalized[4]) : 0.08).toFixed(2)
     const crush = (leds[5] ? normalized[5] : 0).toFixed(2)
     const wet = (leds[6] ? lerp(0.01, 0.34, normalized[6]) : 0.01).toFixed(2)
-    const feedback = (leds[7] ? lerp(0.04, 0.52, normalized[7]) : 0.04).toFixed(2)
+    const feedback = (lerp(0.04, 0.52, leds[6] ? normalized[6] : 0.01)).toFixed(2)
     const keyLabel = keyOverrideRef.current === 'AUTO' ? midiToPitchClass(rootMidi) : keyOverrideRef.current
 
     return `// Generated from TE-DMX preset: ${PRESET_CONFIGS[vibe.presetKey].label}
-// Key: ${keyLabel} | BPM: ${Math.round(vibe.tempo)} | BitCrush: ${Math.round(Number(crush) * 100)}%
+// Key: ${keyLabel} | BPM: ${bpm} | BitCrush: ${Math.round(Number(crush) * 100)}%
 setcps(${cps})
 
 stack(
