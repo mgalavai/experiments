@@ -72,6 +72,7 @@
   gap: 20px;
   padding-right: 24px;
   z-index: 10;
+  min-height: 0;
 }
 
 .grille {
@@ -114,6 +115,10 @@
   flex-direction: column;
 }
 
+.screen-stack {
+  position: relative;
+}
+
 .screen-canvas {
   position: absolute;
   inset: 0;
@@ -153,8 +158,14 @@
   font-family: var(--font-tech);
   font-size: 9px;
   line-height: 1.35;
-  max-height: 145px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 25;
+  max-height: 124px;
   overflow: auto;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 20%);
 }
 
 .strudel-panel-head {

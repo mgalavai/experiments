@@ -929,19 +929,21 @@ stack(
         <section className="section-left">
           <Grille />
           <TinyButtons onToggleCode={toggleStrudelCode} />
-          <ScreenDisplay readout={readout} joyState={joyState} />
-          {showStrudelCode && (
-            <div className="strudel-panel">
-              <div className="strudel-panel-head">
-                <span>STRUDEL</span>
-                <div className="strudel-actions">
-                  <button type="button" className="btn-round tiny tiny-code" onClick={refreshStrudelCode}>sync</button>
-                  <button type="button" className="btn-round tiny tiny-code" onClick={copyStrudelCode}>copy</button>
+          <div className="screen-stack">
+            <ScreenDisplay readout={readout} joyState={joyState} />
+            {showStrudelCode && (
+              <div className="strudel-panel">
+                <div className="strudel-panel-head">
+                  <span>STRUDEL</span>
+                  <div className="strudel-actions">
+                    <button type="button" className="btn-round tiny tiny-code" onClick={refreshStrudelCode}>sync</button>
+                    <button type="button" className="btn-round tiny tiny-code" onClick={copyStrudelCode}>copy</button>
+                  </div>
                 </div>
+                <pre>{strudelCode}</pre>
               </div>
-              <pre>{strudelCode}</pre>
-            </div>
-          )}
+            )}
+          </div>
           <div className="page-button-row">
             <button
               className={`btn-round page ${activePreset === 'lofi' ? 'active-preset' : ''}`}
