@@ -100,8 +100,9 @@
 }
 
 .tiny-key-display {
-  font-family: var(--font-tech);
-  font-size: 9.5px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: 0.02em;
 }
@@ -149,6 +150,13 @@
   font-family: var(--font-tech);
   font-size: 9px;
   letter-spacing: 0.03em;
+}
+
+.tiny-buttons .tiny-code {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .screen-display {
