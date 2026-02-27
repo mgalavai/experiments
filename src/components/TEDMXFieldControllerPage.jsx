@@ -1178,7 +1178,6 @@ stack(
 
         <div className="branding">TE-DMX</div>
         <div className="textile-loop-slot" aria-hidden="true" />
-        <div className="textile-loop-bridge" aria-hidden="true" />
         <div className="textile-loop" aria-hidden="true" />
         <div className={`underhood-overlay ${showStrudelCode ? 'open' : ''}`} aria-hidden={!showStrudelCode}>
           <div className="underhood-header">
