@@ -892,6 +892,23 @@ stack(
     .density(${density})
 )`
   }, [])
+  useEffect(() => {
+    if (!showStrudelCode) return undefined
+    const refreshId = window.setInterval(() => {
+      setStrudelCode(generateStrudelCode())
+    }, 700)
+    return () => window.clearInterval(refreshId)
+  }, [showStrudelCode, generateStrudelCode])
+  useEffect(() => {
+    if (!showStrudelCode) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowStrudelCode(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showStrudelCode])
 
   const toggleStrudelCode = () => {
     if (!showStrudelCode) {
@@ -929,21 +946,7 @@ stack(
         <section className="section-left">
           <Grille />
           <TinyButtons onToggleCode={toggleStrudelCode} />
-          <div className="screen-stack">
-            <ScreenDisplay readout={readout} joyState={joyState} />
-            {showStrudelCode && (
-              <div className="strudel-panel">
-                <div className="strudel-panel-head">
-                  <span>STRUDEL</span>
-                  <div className="strudel-actions">
-                    <button type="button" className="btn-round tiny tiny-code" onClick={refreshStrudelCode}>sync</button>
-                    <button type="button" className="btn-round tiny tiny-code" onClick={copyStrudelCode}>copy</button>
-                  </div>
-                </div>
-                <pre>{strudelCode}</pre>
-              </div>
-            )}
-          </div>
+          <ScreenDisplay readout={readout} joyState={joyState} />
           <div className="page-button-row">
             <button
               className={`btn-round page ${activePreset === 'lofi' ? 'active-preset' : ''}`}
@@ -988,6 +991,21 @@ stack(
         </section>
 
         <div className="branding">TE-DMX</div>
+        <div className={`underhood-overlay ${showStrudelCode ? 'open' : ''}`} aria-hidden={!showStrudelCode}>
+          <div className="underhood-header">
+            <div className="underhood-title-wrap">
+              <span className="underhood-kicker">UNDER THE HOOD</span>
+              <span className="underhood-title">TE-DMX live Strudel output</span>
+            </div>
+            <div className="strudel-actions">
+              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={refreshStrudelCode}>sync</button>
+              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={copyStrudelCode}>copy</button>
+              <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={toggleStrudelCode}>deck</button>
+            </div>
+          </div>
+          <pre className="underhood-code">{strudelCode}</pre>
+          <div className="underhood-footer">Music keeps running. Press <kbd>Esc</kbd> or <strong>deck</strong> to return.</div>
+        </div>
       </div>
     </div>
   )
