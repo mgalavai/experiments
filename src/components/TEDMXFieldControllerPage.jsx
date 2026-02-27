@@ -175,14 +175,67 @@ function Grille() {
   )
 }
 
-function TinyButtons({ onToggleCode }) {
+function TinyButtons({ onToggleCode, selectedKey, onSelectKey }) {
+  const [showKeyMenu, setShowKeyMenu] = useState(false)
+  const keyMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!showKeyMenu) return undefined
+
+    const onPointerDown = (event) => {
+      if (keyMenuRef.current && !keyMenuRef.current.contains(event.target)) {
+        setShowKeyMenu(false)
+      }
+    }
+    const onEscape = (event) => {
+      if (event.key === 'Escape') setShowKeyMenu(false)
+    }
+
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onEscape)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onEscape)
+    }
+  }, [showKeyMenu])
+
   return (
     <div className="tiny-buttons">
-      <button className="btn-round tiny" type="button" aria-label="round indicator">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="12" r="10" />
-        </svg>
-      </button>
+      <div className="tiny-menu-anchor" ref={keyMenuRef}>
+        <button
+          className="btn-round tiny"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={showKeyMenu}
+          aria-label={`Select key. Current ${selectedKey}`}
+          onClick={() => setShowKeyMenu((prev) => !prev)}
+        >
+          {selectedKey === 'AUTO' ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          ) : (
+            <span className="tiny-key-display">{selectedKey}</span>
+          )}
+        </button>
+        {showKeyMenu && (
+          <div className="tiny-key-menu" role="menu" aria-label="Key selection menu">
+            {KEY_OPTIONS.map((keyOption) => (
+              <button
+                key={keyOption}
+                type="button"
+                className={`tiny-key-option ${selectedKey === keyOption ? 'active' : ''}`}
+                onClick={() => {
+                  onSelectKey(keyOption)
+                  setShowKeyMenu(false)
+                }}
+              >
+                {keyOption}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <button className="btn-round tiny" type="button" aria-label="minus indicator">
         <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" fill="none">
           <line x1="4" y1="12" x2="20" y2="12" />
@@ -953,8 +1006,7 @@ export default function TEDMXFieldControllerPage() {
     setReadout(`BPM ${bpm}`)
   }
 
-  const handleKeySelection = (event) => {
-    const nextKey = event.target.value
+  const applyKeySelection = (nextKey) => {
     setSelectedKey(nextKey)
     keyOverrideRef.current = nextKey
 
@@ -965,6 +1017,9 @@ export default function TEDMXFieldControllerPage() {
 
     vibeRef.current.root = keyToRootFrequency(nextKey)
     setReadout(`KEY ${nextKey}`)
+  }
+  const handleKeySelection = (event) => {
+    applyKeySelection(event.target.value)
   }
 
   const generateStrudelCode = useCallback(() => {
@@ -1072,7 +1127,11 @@ stack(
       <div className="device-case">
         <section className="section-left">
           <Grille />
-          <TinyButtons onToggleCode={toggleStrudelCode} />
+          <TinyButtons
+            onToggleCode={toggleStrudelCode}
+            selectedKey={selectedKey}
+            onSelectKey={applyKeySelection}
+          />
           <ScreenDisplay readout={readout} joyState={joyState} />
           <div className="page-button-row">
             <button

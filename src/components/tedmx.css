@@ -95,6 +95,56 @@
   gap: 12px;
 }
 
+.tiny-menu-anchor {
+  position: relative;
+}
+
+.tiny-key-display {
+  font-family: var(--font-tech);
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.tiny-key-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  width: 154px;
+  padding: 6px;
+  border-radius: 7px;
+  background: rgb(240 240 241 / 98%);
+  border: 1px solid rgb(0 0 0 / 10%);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 18%);
+}
+
+.tiny-key-option {
+  height: 24px;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 5px;
+  background: rgb(247 247 248);
+  color: #4b4b4b;
+  font-family: var(--font-tech);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.tiny-key-option.active {
+  color: var(--cap-orange);
+  border-color: rgb(232 74 27 / 45%);
+  background: rgb(232 74 27 / 8%);
+}
+
+.tiny-key-option:hover {
+  background: #efeff0;
+}
+
 .tiny-code {
   font-family: var(--font-tech);
   font-size: 9px;
