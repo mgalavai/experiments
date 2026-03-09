@@ -31,6 +31,7 @@ const CHANNEL_LIGHT_INFO = [
   'CH7 Delay Mix',
   'CH8 Tempo BPM',
 ]
+const DEFAULT_CHANNEL_LEDS = [true, true, true, true, true, false, true, true]
 
 const PRESET_CONFIGS = {
   lofi: {
@@ -523,7 +524,7 @@ export default function TEDMXFieldControllerPage() {
   const [bpmInput, setBpmInput] = useState('104')
   const [selectedKey, setSelectedKey] = useState('AUTO')
   const [faders, setFaders] = useState(INITIAL_FADERS)
-  const [channelLeds, setChannelLeds] = useState([true, true, true, true, true, true, true, true])
+  const [channelLeds, setChannelLeds] = useState(DEFAULT_CHANNEL_LEDS)
   const [isAudioRunning, setIsAudioRunning] = useState(false)
   const [activePreset, setActivePreset] = useState('lofi')
   const [showStrudelCode, setShowStrudelCode] = useState(false)
@@ -531,7 +532,7 @@ export default function TEDMXFieldControllerPage() {
   const manualBpmRef = useRef(104)
   const keyOverrideRef = useRef('AUTO')
   const fadersRef = useRef(INITIAL_FADERS)
-  const channelLedsRef = useRef([true, true, true, true, true, true, true, true])
+  const channelLedsRef = useRef(DEFAULT_CHANNEL_LEDS)
   const joyState = useRef({
     1: { x: 0, y: 0 },
     2: { x: 0, y: 0 },
