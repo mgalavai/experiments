@@ -143,9 +143,9 @@
 
 .telemetry-main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
   grid-template-rows: auto auto auto;
-  gap: 2rem 4rem;
+  gap: 1.7rem 3.25rem;
   flex: 1;
 }
 
@@ -153,6 +153,48 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.telemetry-module-button {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 10px 12px 12px;
+  margin: -10px -12px -12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.telemetry-module-button:hover {
+  border-color: rgb(255 179 0 / 28%);
+  background: rgb(255 179 0 / 4%);
+}
+
+.telemetry-module-button:focus-visible {
+  outline: 1px solid rgb(255 179 0 / 65%);
+  outline-offset: 2px;
+}
+
+.telemetry-module-button:not(.is-selected) {
+  opacity: 0.72;
+}
+
+.telemetry-module-button.is-selected {
+  border-color: rgb(255 179 0 / 48%);
+  background:
+    linear-gradient(90deg, rgb(255 179 0 / 9%), transparent 48%),
+    rgb(255 179 0 / 4%);
+  box-shadow: inset 0 0 24px rgb(255 179 0 / 5%);
+  transform: translateX(4px);
+  opacity: 1;
 }
 
 .telemetry-module-header {
@@ -261,35 +303,15 @@
   color: var(--telemetry-phosphor-dim);
 }
 
-.telemetry-kpi-grid {
-  display: grid;
-  gap: 4px 18px;
-  padding-left: 20px;
-  margin-top: 8px;
-}
-
-.telemetry-kpi-grid--objective-1,
-.telemetry-kpi-grid--objective-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.telemetry-kpi-grid--objective-3 {
-  grid-template-columns: 1fr;
-}
-
-.telemetry-kpi-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 1px dashed rgb(138 99 0 / 60%);
-  padding-top: 4px;
-  font-size: 19px;
+.telemetry-module-hint {
+  letter-spacing: 0.06em;
 }
 
 .telemetry-matrix-module {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: 10px;
 }
 
 .telemetry-matrix-title {
@@ -306,6 +328,17 @@
 
 .telemetry-matrix-pair {
   display: contents;
+}
+
+.telemetry-matrix-pair.is-selected .telemetry-m-label,
+.telemetry-matrix-pair.is-selected .telemetry-m-value {
+  color: var(--telemetry-phosphor-main);
+}
+
+.telemetry-matrix-pair.is-selected .telemetry-m-value {
+  text-shadow:
+    0 0 2px var(--telemetry-phosphor-main),
+    0 0 14px var(--telemetry-phosphor-glow);
 }
 
 .telemetry-m-label {
@@ -325,51 +358,97 @@
   padding-top: 4px;
 }
 
-.telemetry-module--split {
-  margin-top: 20px;
+.telemetry-module--detail {
+  position: relative;
+  min-height: 245px;
 }
 
-.telemetry-chart-frame--split {
-  height: 68px;
-  border: none;
+.telemetry-detail-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0 0 14px 20px;
+  border-bottom: 1px dashed rgb(138 99 0 / 70%);
 }
 
-.telemetry-chart-frame--split::before,
-.telemetry-chart-frame--split::after {
-  top: 0;
-  bottom: 0;
+.telemetry-detail-summary-meta {
+  display: flex;
+  gap: 1rem;
+  text-align: right;
 }
 
-.telemetry-split-chart {
+.telemetry-detail-grid {
+  display: grid;
+  gap: 12px;
+  padding: 14px 0 0 20px;
+}
+
+.telemetry-detail-grid--objective-1,
+.telemetry-detail-grid--objective-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.telemetry-detail-grid--objective-3 {
+  grid-template-columns: 1fr;
+}
+
+.telemetry-detail-card {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  position: absolute;
-  inset: 0;
-  padding: 2px 0;
 }
 
-.telemetry-split-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.telemetry-split-label {
+.telemetry-detail-card-header {
   display: flex;
   justify-content: space-between;
-  font-size: 18px;
+  gap: 1rem;
+  min-height: 50px;
 }
 
-.telemetry-bar-fill--thin {
-  height: 15px;
+.telemetry-detail-track {
+  position: relative;
+  height: 14px;
+  border-top: 1px solid rgb(255 179 0 / 65%);
+  border-bottom: 1px solid rgb(255 179 0 / 65%);
 }
 
-.telemetry-split-axis {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 18px;
+.telemetry-detail-track::before,
+.telemetry-detail-track::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: rgb(255 179 0 / 65%);
+}
+
+.telemetry-detail-track::before {
+  left: 0;
+}
+
+.telemetry-detail-track::after {
+  right: 0;
+}
+
+.telemetry-detail-track-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgb(255 179 0 / 84%), #ffb300);
+  box-shadow: 0 0 10px var(--telemetry-phosphor-glow);
+  transition: width 800ms ease;
+}
+
+.telemetry-detail-track-fill::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgb(5 3 0 / 24%) 2px,
+    rgb(5 3 0 / 24%) 4px
+  );
 }
 
 .telemetry-module--log {
@@ -386,7 +465,7 @@
   font-size: 18px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   border-bottom: none;
 }
 
@@ -508,8 +587,8 @@
     max-width: 100%;
   }
 
-  .telemetry-kpi-grid--objective-1,
-  .telemetry-kpi-grid--objective-2 {
+  .telemetry-detail-grid--objective-1,
+  .telemetry-detail-grid--objective-2 {
     grid-template-columns: 1fr;
   }
 
@@ -528,17 +607,26 @@
     padding: 82px 16px 20px;
   }
 
+  .telemetry-module-button {
+    padding: 8px 10px 10px;
+    margin: -8px -10px -10px;
+  }
+
   .telemetry-module-header,
   .telemetry-module-footer,
   .telemetry-module-subfooter,
-  .telemetry-kpi-grid {
+  .telemetry-detail-summary,
+  .telemetry-detail-grid {
     padding-left: 12px;
   }
 
   .telemetry-module-footer,
-  .telemetry-module-subfooter {
+  .telemetry-module-subfooter,
+  .telemetry-detail-summary,
+  .telemetry-detail-summary-meta {
     flex-direction: column;
     gap: 2px;
+    align-items: flex-start;
   }
 
   .telemetry-axis-label {
@@ -549,7 +637,9 @@
     font-size: 15px;
   }
 
-  .telemetry-split-label {
-    font-size: 15px;
+  .telemetry-detail-card-header {
+    min-height: auto;
+    flex-direction: column;
+    gap: 2px;
   }
 }
