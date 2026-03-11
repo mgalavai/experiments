@@ -50,6 +50,12 @@ body {
   border: 1px solid rgb(0 0 0 / 10%);
 }
 
+.app-nav--telemetry {
+  background: rgb(5 3 0 / 82%);
+  border-color: rgb(255 179 0 / 35%);
+  box-shadow: 0 0 18px rgb(255 179 0 / 12%);
+}
+
 .app-nav a {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.78rem;
@@ -61,12 +67,24 @@ body {
   transition: background-color 160ms ease;
 }
 
+.app-nav--telemetry a {
+  color: #f2b62c;
+}
+
 .app-nav a:hover {
   background: rgb(0 0 0 / 8%);
 }
 
+.app-nav--telemetry a:hover {
+  background: rgb(255 179 0 / 10%);
+}
+
 .app-nav a[aria-current='page'] {
   background: rgb(0 0 0 / 12%);
+}
+
+.app-nav--telemetry a[aria-current='page'] {
+  background: rgb(255 179 0 / 18%);
 }
 
 .digital-key-page {
