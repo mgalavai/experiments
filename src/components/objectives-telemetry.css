@@ -144,11 +144,23 @@
 .telemetry-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
-  grid-template-rows: auto auto auto;
-  gap: 1rem 2.5rem;
+  gap: 2.5rem;
   flex: 1;
   align-items: start;
   align-content: start;
+}
+
+.telemetry-main-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.telemetry-main-column--left {
+  gap: 0.7rem;
+}
+
+.telemetry-main-column--right {
+  gap: 1rem;
 }
 
 .telemetry-module {
@@ -571,6 +583,11 @@
 
   .telemetry-main {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .telemetry-main-column--left,
+  .telemetry-main-column--right {
     gap: 1.5rem;
   }
 

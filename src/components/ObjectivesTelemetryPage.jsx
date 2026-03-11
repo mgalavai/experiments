@@ -292,24 +292,28 @@ export default function ObjectivesTelemetryPage() {
           </header>
 
           <main className="telemetry-main">
-            <ObjectiveModule
-              module={objectiveModules[0]}
-              isSelected={selectedObjectiveId === objectiveModules[0].id}
-              onSelect={setSelectedObjectiveId}
-            />
-            <StatusMatrix selectedObjectiveId={selectedObjectiveId} />
-            <ObjectiveModule
-              module={objectiveModules[1]}
-              isSelected={selectedObjectiveId === objectiveModules[1].id}
-              onSelect={setSelectedObjectiveId}
-            />
-            <ObjectiveDetailDeck module={selectedObjective} animatedWidths={animatedDetailWidths} />
-            <ObjectiveModule
-              module={objectiveModules[2]}
-              isSelected={selectedObjectiveId === objectiveModules[2].id}
-              onSelect={setSelectedObjectiveId}
-            />
-            <EventLog module={selectedObjective} />
+            <div className="telemetry-main-column telemetry-main-column--left">
+              <ObjectiveModule
+                module={objectiveModules[0]}
+                isSelected={selectedObjectiveId === objectiveModules[0].id}
+                onSelect={setSelectedObjectiveId}
+              />
+              <ObjectiveModule
+                module={objectiveModules[1]}
+                isSelected={selectedObjectiveId === objectiveModules[1].id}
+                onSelect={setSelectedObjectiveId}
+              />
+              <ObjectiveModule
+                module={objectiveModules[2]}
+                isSelected={selectedObjectiveId === objectiveModules[2].id}
+                onSelect={setSelectedObjectiveId}
+              />
+            </div>
+            <div className="telemetry-main-column telemetry-main-column--right">
+              <StatusMatrix selectedObjectiveId={selectedObjectiveId} />
+              <ObjectiveDetailDeck module={selectedObjective} animatedWidths={animatedDetailWidths} />
+              <EventLog module={selectedObjective} />
+            </div>
           </main>
 
           <div className="telemetry-command-line">
