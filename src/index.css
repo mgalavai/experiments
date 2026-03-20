@@ -250,6 +250,193 @@ button {
   background: linear-gradient(to left, var(--paper-main) 85%, #f4f1ed 95%, #ebe7e1 100%);
 }
 
+.page-turn-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  perspective: 2200px;
+  transform-style: preserve-3d;
+}
+
+.page-turn-back,
+.page-turn-front {
+  position: absolute;
+  inset: 0;
+  transform-origin: right center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.page-turn-back {
+  z-index: 1;
+  transform: translateX(12px) scale(0.996);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.page-turn-front {
+  z-index: 2;
+  overflow: hidden;
+  transition:
+    transform 780ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 780ms ease;
+}
+
+.page-turn-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.035) 94%, rgba(0, 0, 0, 0.08) 100%);
+  opacity: 0.55;
+  transition: opacity 400ms ease;
+}
+
+.page-turn-front.is-turned {
+  transform: translateX(7%) rotateY(-126deg);
+  box-shadow:
+    -26px 8px 46px rgba(0, 0, 0, 0.14),
+    -2px 0 0 rgba(255, 255, 255, 0.25);
+}
+
+.page-turn-front.is-turned::after {
+  opacity: 0.78;
+}
+
+.page-turn-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  height: 110px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.page-turn-corner:focus-visible {
+  outline: 2px solid rgba(186, 109, 115, 0.45);
+  outline-offset: -6px;
+}
+
+.page-turn-corner-fold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 88px;
+  height: 88px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 242, 237, 0.96) 52%, rgba(220, 213, 207, 0.98) 100%);
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+  box-shadow:
+    -12px -12px 24px rgba(0, 0, 0, 0.08),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7);
+  opacity: 0.92;
+  transform-origin: bottom right;
+  transition:
+    transform 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 280ms ease,
+    box-shadow 280ms ease;
+}
+
+.page-turn-corner:hover .page-turn-corner-fold {
+  transform: translate(-4px, -4px) scale(1.02);
+  opacity: 1;
+}
+
+.page-turn-corner.is-open .page-turn-corner-fold {
+  transform: translate(-6px, -6px) scale(1.04);
+  opacity: 1;
+  box-shadow:
+    -16px -16px 28px rgba(0, 0, 0, 0.12),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.corner-deco--back {
+  opacity: 0.75;
+}
+
+.next-page-subtitle {
+  margin-top: 0.2rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.08rem;
+  color: var(--ink-medium);
+}
+
+.next-page-panel {
+  margin-top: 1rem;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(186, 109, 115, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.next-page-panel-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--accent-rose);
+  margin-bottom: 0.75rem;
+}
+
+.next-page-list {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+  color: var(--ink-dark);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.next-page-list li {
+  padding-left: 0.85rem;
+  position: relative;
+}
+
+.next-page-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.56rem;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: rgba(186, 109, 115, 0.55);
+}
+
+.next-page-note {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--ink-medium);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.next-page-note-label {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(186, 109, 115, 0.1);
+  color: var(--accent-rose);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notes-area--back {
+  margin-top: 0.25rem;
+  height: 180px;
+}
+
 .page-curl-target {
   position: absolute;
   bottom: 0;
@@ -712,6 +899,10 @@ button {
   .planner-book {
     flex-direction: column;
     min-height: 0;
+  }
+
+  .page-turn-stage {
+    min-height: 36rem;
   }
 
   .page {
