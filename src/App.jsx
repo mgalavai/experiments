@@ -1,4 +1,5 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { Agentation } from 'agentation'
 import DigitalKeyPage from './components/DigitalKeyPage'
 import FridayPlannerPage from './components/FridayPlannerPage'
@@ -31,11 +32,12 @@ const views = [
 function TopNav() {
   const location = useLocation()
   const isTelemetryRoute = location.pathname === '/telemetry-monitor'
+  const isDigitalKeyRoute = location.pathname === '/digital-key'
   const isPlannerRoute = location.pathname === '/friday-planner'
 
   return (
     <nav
-      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''}`}
+      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''}`}
       aria-label="Views"
     >
       {views.map((view) => (
@@ -48,6 +50,19 @@ function TopNav() {
 }
 
 function AppShell() {
+  const location = useLocation()
+
+  useEffect(() => {
+    const routeClass = `route-${location.pathname.replace(/\//g, '-') || 'root'}`
+    document.body.dataset.route = location.pathname
+    document.body.classList.add(routeClass)
+
+    return () => {
+      document.body.classList.remove(routeClass)
+      delete document.body.dataset.route
+    }
+  }, [location.pathname])
+
   return (
     <>
       <TopNav />
