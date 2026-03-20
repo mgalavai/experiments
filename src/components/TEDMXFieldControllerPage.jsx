@@ -1213,9 +1213,9 @@ stack(
                 </label>
               </div>
               <div className="strudel-actions">
-                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={refreshStrudelCode}>sync</button>
-                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={copyStrudelCode}>copy</button>
-                <button type="button" className="btn-round tiny tiny-code underhood-btn" onClick={toggleStrudelCode}>deck</button>
+                <button type="button" className="btn-round tiny underhood-btn" onClick={refreshStrudelCode}>sync</button>
+                <button type="button" className="btn-round tiny underhood-btn" onClick={copyStrudelCode}>copy</button>
+                <button type="button" className="btn-round tiny underhood-btn" onClick={toggleStrudelCode}>deck</button>
               </div>
             </div>
           </div>
