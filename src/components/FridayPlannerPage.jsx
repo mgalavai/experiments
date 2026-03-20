@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const monthTabs = ['Jan', 'Feb', 'Mar', 'Apr', 'May']
 
@@ -91,9 +91,60 @@ function TaskItem({ task, onToggle }) {
   )
 }
 
+function getOrdinalSuffix(day) {
+  const remainder100 = day % 100
+  if (remainder100 >= 11 && remainder100 <= 13) return `${day}th`
+
+  switch (day % 10) {
+    case 1:
+      return `${day}st`
+    case 2:
+      return `${day}nd`
+    case 3:
+      return `${day}rd`
+    default:
+      return `${day}th`
+  }
+}
+
+function formatToday(date) {
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const month = date.toLocaleDateString('en-US', { month: 'long' })
+  const year = date.getFullYear()
+  return {
+    weekday,
+    date: `${month} ${getOrdinalSuffix(date.getDate())}, ${year}`,
+  }
+}
+
+function formatCurrentTime(date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function getCurrentTimePosition(date) {
+  const currentHours = date.getHours() + date.getMinutes() / 60
+  const startHour = 8
+  const endHour = 18
+  const normalized = ((currentHours - startHour) / (endHour - startHour)) * 100
+  return Math.min(100, Math.max(0, normalized))
+}
+
 function PlannerBook() {
   const [activeTab, setActiveTab] = useState('Mar')
   const [tasks, setTasks] = useState(initialTasks)
+  const [now, setNow] = useState(() => new Date())
+  const [isCurlOpen, setIsCurlOpen] = useState(false)
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   const toggleTask = (id) => {
     setTasks((current) =>
@@ -101,11 +152,15 @@ function PlannerBook() {
     )
   }
 
+  const today = useMemo(() => formatToday(now), [now])
+  const currentTime = useMemo(() => formatCurrentTime(now), [now])
+  const currentTimeTop = useMemo(() => `${getCurrentTimePosition(now)}%`, [now])
+
   return (
     <main className="desk-surface">
-      <PlannerTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
       <article className="planner-book">
+        <PlannerTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
         <section className="page left">
           <header className="date-header">
             <div className="meta-top">
@@ -113,12 +168,14 @@ function PlannerBook() {
               <div className="meta-line" />
               <span>Spring Equinox</span>
             </div>
-            <h1 className="day-title">Thursday</h1>
-            <div className="date-subtitle">March 21st, 2024</div>
+            <h1 className="day-title">{today.weekday}</h1>
+            <div className="date-subtitle">{today.date}</div>
           </header>
 
           <div className="schedule-container">
-            <div className="current-time-indicator" />
+            <div className="current-time-indicator" style={{ top: currentTimeTop }}>
+              <span className="current-time-label">Now {currentTime}</span>
+            </div>
 
             <div className="time-block">
               <div className="time-label">08:00</div>
@@ -230,8 +287,21 @@ function PlannerBook() {
             </div>
           </div>
 
-          <div className="page-curl-target" />
-          <div className="page-curl" />
+          <button
+            type="button"
+            className={`page-curl-target ${isCurlOpen ? 'is-open' : ''}`}
+            aria-pressed={isCurlOpen}
+            aria-label={isCurlOpen ? 'Close hidden note' : 'Open hidden note'}
+            onClick={() => setIsCurlOpen((current) => !current)}
+          />
+          <div className={`page-curl ${isCurlOpen ? 'is-open' : ''}`} />
+          {isCurlOpen && (
+            <aside className="curl-note is-open" aria-live="polite">
+              <span className="curl-note-kicker">Hidden note</span>
+              <strong>Tomorrow:</strong>
+              <span>Confirm stems for the market run at 08:30.</span>
+            </aside>
+          )}
         </section>
       </article>
     </main>

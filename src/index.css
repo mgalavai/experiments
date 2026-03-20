@@ -144,12 +144,26 @@ button {
 
 .planner-tabs {
   position: absolute;
-  right: -40px;
+  right: -3.35rem;
   top: 50px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   z-index: 1;
+}
+
+.planner-tabs::before {
+  content: '';
+  position: absolute;
+  left: -0.85rem;
+  top: 0.85rem;
+  bottom: 0.85rem;
+  width: 0.85rem;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background: linear-gradient(90deg, rgba(248, 244, 239, 0.96), rgba(232, 228, 223, 0.82));
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .tab {
@@ -244,6 +258,12 @@ button {
   height: 100px;
   cursor: pointer;
   z-index: 10;
+  background: transparent;
+}
+
+.page-curl-target:focus-visible {
+  outline: 2px solid rgba(186, 109, 115, 0.45);
+  outline-offset: -6px;
 }
 
 .page-curl {
@@ -259,7 +279,8 @@ button {
   border-top-left-radius: 10px;
 }
 
-.page-curl-target:hover + .page-curl {
+.page-curl-target:hover + .page-curl,
+.page-curl.is-open {
   width: 60px;
   height: 60px;
 }
@@ -411,7 +432,6 @@ button {
 
 .current-time-indicator {
   position: absolute;
-  top: 130px;
   left: 45px;
   right: 0;
   height: 1px;
@@ -428,6 +448,21 @@ button {
   height: 9px;
   background: var(--accent-rose);
   border-radius: 50%;
+}
+
+.current-time-label {
+  position: absolute;
+  right: 0;
+  top: -0.9rem;
+  padding: 0.22rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(186, 109, 115, 0.18);
+  color: var(--accent-rose);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .section-title {
@@ -457,7 +492,7 @@ button {
 
 .task-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   padding: 12px 0;
   border-bottom: 1px solid var(--ink-faint);
@@ -465,6 +500,8 @@ button {
 
 .task-checkbox {
   position: relative;
+  display: grid;
+  place-items: center;
   width: 18px;
   height: 18px;
   border: 1px solid var(--ink-light);
@@ -494,13 +531,11 @@ button {
 .task-item.completed .task-checkbox::after {
   content: '';
   position: absolute;
-  top: 4px;
-  left: 7px;
-  width: 3px;
+  width: 4px;
   height: 7px;
-  border: solid white;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
+  border-right: 1.5px solid white;
+  border-bottom: 1.5px solid white;
+  transform: translateY(-1px) rotate(45deg);
 }
 
 .task-content {
@@ -542,6 +577,48 @@ button {
   position: relative;
   height: 250px;
   padding-top: 8px;
+}
+
+.curl-note {
+  position: absolute;
+  right: 1rem;
+  bottom: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  width: min(14rem, 52%);
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.9rem 0.9rem 0.45rem 0.9rem;
+  background: rgba(255, 252, 249, 0.9);
+  border: 1px solid rgba(186, 109, 115, 0.18);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.08);
+  color: var(--ink-medium);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(0.5rem) scale(0.98);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.curl-note.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.curl-note-kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(186, 109, 115, 0.1);
+  color: var(--accent-rose);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .ruled-line {
@@ -615,7 +692,7 @@ button {
 
 @media (max-width: 900px) {
   .planner-tabs {
-    right: -30px;
+    right: -2.6rem;
   }
 
   .tab {
@@ -650,6 +727,11 @@ button {
     flex-direction: row;
     justify-content: flex-end;
     margin-bottom: 12px;
+    width: fit-content;
+  }
+
+  .planner-tabs::before {
+    display: none;
   }
 
   .tab {
@@ -673,5 +755,9 @@ button {
   .event {
     left: 54px;
     right: 12px;
+  }
+
+  .curl-note {
+    width: min(12rem, 72%);
   }
 }
