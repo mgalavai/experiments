@@ -5,6 +5,29 @@ import FridayPlannerPage from './components/FridayPlannerPage'
 import ObjectivesTelemetryPage from './components/ObjectivesTelemetryPage'
 import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 
+const views = [
+  {
+    path: '/telemetry-monitor',
+    label: 'Objective Telemetry',
+    element: <ObjectivesTelemetryPage />,
+  },
+  {
+    path: '/digital-key',
+    label: 'Digital Key',
+    element: <DigitalKeyPage />,
+  },
+  {
+    path: '/te-dmx',
+    label: 'TE-DMX Controller',
+    element: <TEDMXFieldControllerPage />,
+  },
+  {
+    path: '/friday-planner',
+    label: 'Friday Planner',
+    element: <FridayPlannerPage />,
+  },
+]
+
 function TopNav() {
   const location = useLocation()
   const isTelemetryRoute = location.pathname === '/telemetry-monitor'
@@ -15,10 +38,11 @@ function TopNav() {
       className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''}`}
       aria-label="Views"
     >
-      <NavLink to="/telemetry-monitor">Objective Telemetry</NavLink>
-      <NavLink to="/digital-key">Digital Key</NavLink>
-      <NavLink to="/te-dmx">TE-DMX Controller</NavLink>
-      <NavLink to="/friday-planner">Friday Planner</NavLink>
+      {views.map((view) => (
+        <NavLink key={view.path} to={view.path}>
+          {view.label}
+        </NavLink>
+      ))}
     </nav>
   )
 }
@@ -28,11 +52,10 @@ function AppShell() {
     <>
       <TopNav />
       <Routes>
-        <Route path="/" element={<Navigate to="/telemetry-monitor" replace />} />
-        <Route path="/telemetry-monitor" element={<ObjectivesTelemetryPage />} />
-        <Route path="/digital-key" element={<DigitalKeyPage />} />
-        <Route path="/te-dmx" element={<TEDMXFieldControllerPage />} />
-        <Route path="/friday-planner" element={<FridayPlannerPage />} />
+        <Route path="/" element={<Navigate to={views[0].path} replace />} />
+        {views.map((view) => (
+          <Route key={view.path} path={view.path} element={view.element} />
+        ))}
       </Routes>
       {import.meta.env.DEV && <Agentation />}
     </>

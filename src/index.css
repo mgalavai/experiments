@@ -69,10 +69,19 @@ button {
   display: inline-flex;
   gap: 0.5rem;
   padding: 0.35rem;
+  max-width: calc(100vw - 1.5rem);
   border-radius: 999px;
   background: rgb(255 255 255 / 70%);
   backdrop-filter: blur(8px);
   border: 1px solid rgb(0 0 0 / 10%);
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.app-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .app-nav--telemetry {
@@ -88,6 +97,7 @@ button {
 }
 
 .app-nav a {
+  flex: 0 0 auto;
   font-family: var(--font-sans);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
