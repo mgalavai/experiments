@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Raleway:wght@300;400;500;600&display=swap');
+@import './components/digital-key.css';
 @import './components/objectives-telemetry.css';
 @import './components/tedmx.css';
 
