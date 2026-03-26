@@ -61,11 +61,15 @@ function ditherImage(imageData, width, height, opts) {
   const rPx = (cornerRadius / 100) * Math.min(sw, sh) * 0.5
   function insideRoundedRect(x, y) {
     if (rPx <= 0) return true
-    const left = rPx, right = sw - rPx, top = rPx, bottom = sh - rPx
-    if (x >= left && x <= right) return true
-    if (y >= top && y <= bottom) return true
-    const cx = x < left ? left : right
-    const cy = y < top ? top : bottom
+    // Inside the inner cross (no rounding needed)
+    const inH = x >= rPx && x <= sw - 1 - rPx
+    const inV = y >= rPx && y <= sh - 1 - rPx
+    if (inH && inV) return true   // center rect
+    if (inH) return y >= 0 && y < sh  // horizontal band (top/bottom edges, no corners)
+    if (inV) return x >= 0 && x < sw  // vertical band (left/right edges, no corners)
+    // Corner zone — check arc
+    const cx = x < rPx ? rPx : sw - 1 - rPx
+    const cy = y < rPx ? rPx : sh - 1 - rPx
     const dx = x - cx, dy = y - cy
     return dx * dx + dy * dy <= rPx * rPx
   }
