@@ -1,0 +1,307 @@
+/* ── Logo / Dither Tool ── */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap');
+
+.logo-page {
+  min-height: 100vh;
+  display: flex;
+  background: #0a0a0a;
+  color: #c8c8c8;
+  font-family: 'DM Sans', sans-serif;
+  padding-top: 3.5rem;
+}
+
+/* ── Sidebar ── */
+
+.logo-sidebar {
+  width: 280px;
+  min-width: 280px;
+  padding: 1.25rem 1rem;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border-right: 1px solid #1e1e1e;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.logo-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #e8e8e8;
+  margin-bottom: 0.6rem;
+}
+
+/* ── Upload ── */
+
+.logo-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  background: #111;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #888;
+  transition: border-color 160ms ease, background 160ms ease;
+  margin-bottom: 0.5rem;
+}
+
+.logo-upload:hover {
+  border-color: #555;
+  background: #161616;
+}
+
+/* ── Collapsible sections ── */
+
+.logo-section {
+  border-top: 1px solid #1a1a1a;
+  padding: 0.1rem 0;
+}
+
+.logo-section__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.55rem 0.15rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #bbb;
+  background: none;
+  border: none;
+  text-align: left;
+  transition: color 120ms ease;
+}
+
+.logo-section__toggle:hover {
+  color: #eee;
+}
+
+.logo-section__chevron {
+  display: inline-block;
+  font-size: 0.85rem;
+  transition: transform 160ms ease;
+  color: #666;
+}
+
+.logo-section__chevron[data-open='true'] {
+  transform: rotate(90deg);
+}
+
+.logo-section__body {
+  padding: 0 0.15rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.logo-algo-label {
+  font-size: 0.75rem;
+  color: #6e6eff;
+  font-weight: 500;
+  margin-bottom: 0.1rem;
+}
+
+/* ── Slider ── */
+
+.logo-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.logo-slider__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.logo-slider__label {
+  font-size: 0.72rem;
+  color: #999;
+}
+
+.logo-slider__value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #777;
+}
+
+.logo-slider input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    #6e6eff 0%,
+    #6e6eff var(--pct, 50%),
+    #222 var(--pct, 50%),
+    #222 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.logo-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6e6eff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(110, 110, 255, 0.4);
+}
+
+.logo-slider input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6e6eff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(110, 110, 255, 0.4);
+}
+
+/* ── Checkbox ── */
+
+.logo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.logo-checkbox input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #444;
+  border-radius: 3px;
+  background: #111;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.logo-checkbox input[type='checkbox']:checked {
+  background: #6e6eff;
+  border-color: #6e6eff;
+}
+
+.logo-checkbox input[type='checkbox']:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.65rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── Export buttons ── */
+
+.logo-export-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.logo-btn {
+  flex: 1;
+  padding: 0.5rem 0;
+  border-radius: 6px;
+  background: #6e6eff;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 140ms ease, transform 80ms ease;
+}
+
+.logo-btn:hover {
+  background: #5a5aee;
+}
+
+.logo-btn:active {
+  transform: scale(0.97);
+}
+
+.logo-dot-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: #555;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ── Canvas area ── */
+
+.logo-canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.logo-canvas-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #444;
+}
+
+.logo-canvas {
+  background: #fff;
+  border-radius: 4px;
+  cursor: none;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.logo-canvas-area .logo-slider {
+  width: 300px;
+}
+
+/* ── Nav override for logo route ── */
+
+.app-nav--logo {
+  background: rgb(10 10 10 / 82%);
+  border-color: rgb(110 110 255 / 30%);
+  box-shadow: 0 0 18px rgb(110 110 255 / 10%);
+}
+
+.app-nav--logo a {
+  color: #8888ff;
+}
+
+.app-nav--logo a:hover {
+  background: rgb(110 110 255 / 10%);
+}
+
+.app-nav--logo a[aria-current='page'] {
+  background: rgb(110 110 255 / 18%);
+}

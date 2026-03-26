@@ -2,6 +2,7 @@
 @import './components/digital-key.css';
 @import './components/objectives-telemetry.css';
 @import './components/tedmx.css';
+@import './components/logo.css';
 
 :root {
   --paper-main: #fdfbf9;
