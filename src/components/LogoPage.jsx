@@ -549,7 +549,7 @@ export default function LogoPage() {
 
         {/* Render */}
         <Section title="Render">
-          <Slider label="Render Scale" value={renderScale} onChange={setRenderScale} min={0.1} max={1} step={0.01} />
+          <Slider label="Render Scale" value={renderScale} onChange={setRenderScale} min={0.1} max={3} step={0.01} />
           <Slider label="Canvas Size" value={canvasSize} onChange={(v) => setCanvasSize(Math.round(v))} min={200} max={1200} step={50} suffix="px" />
         </Section>
 
