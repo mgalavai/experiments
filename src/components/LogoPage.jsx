@@ -493,7 +493,19 @@ export default function LogoPage() {
             onChange={(e) => handleFile(e.target.files?.[0])}
             hidden
           />
-          <span>{hasImage ? `${imgSizeRef.current.w}×${imgSizeRef.current.h}` : 'Drop image or click'}</span>
+          {hasImage ? (
+            <span className="logo-upload__loaded">
+              <span className="logo-upload__size">{imgSizeRef.current.w}×{imgSizeRef.current.h}</span>
+              <span className="logo-upload__change">Change image</span>
+            </span>
+          ) : (
+            <span className="logo-upload__empty">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+              <span>Drop image or click to browse</span>
+            </span>
+          )}
         </label>
 
         {/* Algorithm */}
