@@ -479,7 +479,7 @@ export default function LogoPage() {
   return (
     <div className="logo-page">
       <aside className="logo-sidebar">
-        <h1 className="logo-title">Dither Tool</h1>
+        <h1 className="logo-title">Dither Lab</h1>
 
         {/* Upload zone */}
         <label
