@@ -9,7 +9,6 @@ const POWER_SCORE = 50
 const GHOST_SCORE = 200
 const TEXT_LAYOUT_OPTIONS = { whiteSpace: 'pre-wrap' }
 const BOARD_TEXT_PADDING = 24
-const HUD_TEXT_PADDING = 18
 const DIRECTIONS = {
   up: { row: -1, col: 0 },
   down: { row: 1, col: 0 },
@@ -442,67 +441,10 @@ function drawBoard(canvas, boardText, fontReady) {
   drawScanlines(context, width, height)
 }
 
-function drawHud(canvas, briefing, fontReady) {
-  if (!canvas) return
-
-  const bounds = canvas.getBoundingClientRect()
-  const width = Math.max(Math.floor(bounds.width), 320)
-  const height = Math.max(Math.floor(bounds.height), 380)
-  const dpr = window.devicePixelRatio || 1
-
-  canvas.width = width * dpr
-  canvas.height = height * dpr
-
-  const context = canvas.getContext('2d')
-  context.setTransform(dpr, 0, 0, dpr, 0, 0)
-  context.clearRect(0, 0, width, height)
-
-  const gradient = context.createLinearGradient(0, 0, width, height)
-  gradient.addColorStop(0, '#050912')
-  gradient.addColorStop(1, '#081b1d')
-  context.fillStyle = gradient
-  context.fillRect(0, 0, width, height)
-
-  context.strokeStyle = 'rgba(123, 220, 255, 0.25)'
-  context.strokeRect(0.5, 0.5, width - 1, height - 1)
-
-  const layout = fitPretextBlock(
-    briefing,
-    width - HUD_TEXT_PADDING * 2,
-    height - 56,
-    fontReady ? 14 : 12,
-    10,
-    1.35,
-  )
-
-  context.fillStyle = '#fef3b2'
-  context.font = '14px "Departure Mono", monospace'
-  context.fillText('PAC-01 // PRETEXT PANEL', HUD_TEXT_PADDING, 24)
-
-  context.fillStyle = '#6de0ff'
-  context.font = '11px "Departure Mono", monospace'
-  context.fillText(fontReady ? 'font synced // canvas layout armed' : 'loading font metrics...', HUD_TEXT_PADDING, 42)
-
-  if (!layout) return
-
-  context.fillStyle = '#d4f7db'
-  context.font = layout.font
-
-  layout.lines.forEach((line, index) => {
-    context.fillText(line.text || ' ', HUD_TEXT_PADDING, 68 + index * layout.lineHeight)
-  })
-
-  context.fillStyle = 'rgba(255, 255, 255, 0.06)'
-  for (let y = 56; y < height; y += 22) {
-    context.fillRect(12, y, width - 24, 1)
-  }
-}
-
 export default function PacmanPage() {
   const [game, setGame] = useState(() => createInitialGame())
   const [fontReady, setFontReady] = useState(false)
   const boardCanvasRef = useRef(null)
-  const hudCanvasRef = useRef(null)
   const desiredDirectionRef = useRef('left')
 
   const statusLabel = game.status === 'ready'
@@ -514,25 +456,6 @@ export default function PacmanPage() {
         : 'signal lost'
 
   const boardText = useMemo(() => buildBoardText(game, statusLabel), [game, statusLabel])
-
-  const briefing = useMemo(() => {
-    return [
-      `status: ${statusLabel}`,
-      `score: ${String(game.score).padStart(4, '0')}`,
-      `pellets: ${game.totalPellets - game.pelletsRemaining}/${game.totalPellets}`,
-      `ghost: ${game.poweredTicks > 0 ? 'frightened' : 'tracking'}`,
-      '',
-      'this pass removes the shape renderer from the maze.',
-      'the board is now assembled as plain text rows and fit into the canvas by pretext using departure mono metrics.',
-      '',
-      'controls',
-      '  arrows or wasd  move pacman',
-      '  space           reset / start',
-      '',
-      'recent events',
-      ...game.events.map((event) => `  - ${event.toLowerCase()}`),
-    ].join('\n')
-  }, [game.events, game.pelletsRemaining, game.poweredTicks, game.score, game.status, game.totalPellets, statusLabel])
 
   useEffect(() => {
     let cancelled = false
@@ -639,21 +562,6 @@ export default function PacmanPage() {
     }
   }, [boardText, fontReady])
 
-  useEffect(() => {
-    const canvas = hudCanvasRef.current
-    if (!canvas) return
-
-    const redraw = () => drawHud(canvas, briefing, fontReady)
-    redraw()
-
-    const observer = new ResizeObserver(redraw)
-    observer.observe(canvas)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [briefing, fontReady])
-
   function handleReset() {
     desiredDirectionRef.current = 'left'
     setGame(createInitialGame())
@@ -669,44 +577,23 @@ export default function PacmanPage() {
             <h1>Pacman rendered as a live text block.</h1>
           </div>
           <p className="pacman-summary">
-            The maze is now a glyph-only composition. Every board line is built from the current game state, then measured and wrapped by
-            pretext before it is drawn.
+            The maze is a glyph-only composition built from live game state and laid out with pretext before draw.
           </p>
         </header>
 
         <div className="pacman-stage">
           <div className="pacman-board-card">
             <canvas ref={boardCanvasRef} className="pacman-board" aria-label="Pacman demo board" />
-          </div>
-
-          <aside className="pacman-sidebar">
-            <div className="pacman-sidebar__canvas-frame">
-              <canvas ref={hudCanvasRef} className="pacman-sidebar__canvas" aria-hidden="true" />
-            </div>
-
-            <div className="pacman-sidebar__controls">
-              <div className="pacman-chip-row" aria-label="Controls">
-                <span>ARROWS</span>
-                <span>WASD</span>
-                <span>SPACE</span>
-              </div>
-
-              <div className="pacman-stats" aria-label="Status">
-                <div>
-                  <span className="pacman-stats__label">Mode</span>
-                  <strong>{statusLabel}</strong>
-                </div>
-                <div>
-                  <span className="pacman-stats__label">Power</span>
-                  <strong>{game.poweredTicks > 0 ? `${game.poweredTicks} ticks` : 'offline'}</strong>
-                </div>
-              </div>
-
+            <div className="pacman-actions">
               <button type="button" className="pacman-reset" onClick={handleReset}>
                 reset maze
               </button>
+
+              <p className="pacman-inline-note">
+                {statusLabel} // arrows or wasd move // space starts or reruns
+              </p>
             </div>
-          </aside>
+          </div>
         </div>
       </section>
     </main>
