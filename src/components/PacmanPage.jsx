@@ -2,18 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { layoutWithLines, prepareWithSegments } from '@chenglou/pretext'
 import './pacman.css'
 
-const CELL_SIZE = 28
-const BOARD_PADDING = 22
 const TICK_MS = 140
 const POWER_TICKS = 48
 const PELLET_SCORE = 10
 const POWER_SCORE = 50
 const GHOST_SCORE = 200
+const TEXT_LAYOUT_OPTIONS = { whiteSpace: 'pre-wrap' }
+const BOARD_TEXT_PADDING = 24
+const HUD_TEXT_PADDING = 18
 const DIRECTIONS = {
-  up: { row: -1, col: 0, angle: Math.PI * 1.5 },
-  down: { row: 1, col: 0, angle: Math.PI * 0.5 },
-  left: { row: 0, col: -1, angle: Math.PI },
-  right: { row: 0, col: 1, angle: 0 },
+  up: { row: -1, col: 0 },
+  down: { row: 1, col: 0 },
+  left: { row: 0, col: -1 },
+  right: { row: 0, col: 1 },
 }
 const DIRECTION_KEYS = {
   ArrowUp: 'up',
@@ -46,9 +47,6 @@ const LEVEL_TEMPLATE = [
   '#...............#',
   '#################',
 ]
-
-const BOARD_WIDTH = LEVEL_TEMPLATE[0].length * CELL_SIZE + BOARD_PADDING * 2
-const BOARD_HEIGHT = LEVEL_TEMPLATE.length * CELL_SIZE + BOARD_PADDING * 2
 
 function appendEvent(events, message) {
   return [message, ...events].slice(0, 5)
@@ -144,7 +142,7 @@ function createInitialGame() {
     events: [
       'SPACE TO BOOT THE MAZE',
       'ARROWS OR WASD TO STEER',
-      'PRETEXT POWERS THE STATUS PANEL',
+      'MAZE RENDERED WITH PRETEXT ONLY',
     ],
   }
 }
@@ -268,134 +266,180 @@ function advanceGame(state, desiredDirection) {
   }
 }
 
-function drawRoundedRect(context, x, y, width, height, radius) {
-  context.beginPath()
-  context.moveTo(x + radius, y)
-  context.arcTo(x + width, y, x + width, y + height, radius)
-  context.arcTo(x + width, y + height, x, y + height, radius)
-  context.arcTo(x, y + height, x, y, radius)
-  context.arcTo(x, y, x + width, y, radius)
-  context.closePath()
+function rawLineCount(text) {
+  return text.split('\n').length
 }
 
-function drawMaze(context, game) {
-  context.clearRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT)
+function fitPretextBlock(text, maxWidth, maxHeight, maxFontSize, minFontSize, lineHeightRatio) {
+  const targetLineCount = rawLineCount(text)
+  let fallback = null
 
-  const boardGradient = context.createLinearGradient(0, 0, BOARD_WIDTH, BOARD_HEIGHT)
-  boardGradient.addColorStop(0, '#01030c')
-  boardGradient.addColorStop(0.5, '#071437')
-  boardGradient.addColorStop(1, '#010102')
-  context.fillStyle = boardGradient
-  context.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT)
+  for (let size = maxFontSize; size >= minFontSize; size -= 1) {
+    const lineHeight = Math.ceil(size * lineHeightRatio)
+    const font = `${size}px "Departure Mono"`
+    const prepared = prepareWithSegments(text, font, TEXT_LAYOUT_OPTIONS)
+    const result = layoutWithLines(prepared, maxWidth, lineHeight)
+    const candidate = {
+      font,
+      lineHeight,
+      lines: result.lines,
+      lineCount: result.lineCount,
+      height: result.height,
+    }
 
-  context.save()
-  context.translate(BOARD_PADDING, BOARD_PADDING)
+    fallback = candidate
 
-  game.maze.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-      const x = colIndex * CELL_SIZE
-      const y = rowIndex * CELL_SIZE
+    if (result.lineCount === targetLineCount && result.height <= maxHeight) {
+      return candidate
+    }
+  }
 
-      if (cell === '#') {
-        drawRoundedRect(context, x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4, 8)
-        context.fillStyle = '#102b8a'
-        context.fill()
-        context.strokeStyle = '#64d8ff'
-        context.lineWidth = 1.25
-        context.stroke()
-        return
+  return fallback
+}
+
+function padLine(text, width) {
+  return text.length >= width ? text.slice(0, width) : text.padEnd(width, ' ')
+}
+
+function centerLine(text, width) {
+  if (text.length >= width) return text.slice(0, width)
+  const left = Math.floor((width - text.length) / 2)
+  const right = width - text.length - left
+  return `${' '.repeat(left)}${text}${' '.repeat(right)}`
+}
+
+function getPacmanGlyph(direction, tick) {
+  if (tick % 2 !== 0) return 'O'
+  if (direction === 'up') return '^'
+  if (direction === 'down') return 'v'
+  if (direction === 'left') return '<'
+  return '>'
+}
+
+function getGhostGlyph(poweredTicks) {
+  return poweredTicks > 0 ? 'W' : 'M'
+}
+
+function buildMazeRows(game) {
+  return game.maze.map((row, rowIndex) => {
+    return row.map((cell, colIndex) => {
+      if (game.pacman.row === rowIndex && game.pacman.col === colIndex) {
+        return getPacmanGlyph(game.pacman.dir, game.tick)
       }
 
-      context.fillStyle = 'rgba(6, 19, 48, 0.7)'
-      context.fillRect(x, y, CELL_SIZE, CELL_SIZE)
-
-      if (cell === '.' || cell === 'o') {
-        context.beginPath()
-        context.fillStyle = cell === 'o' ? '#ff8fb8' : '#ffe991'
-        context.arc(
-          x + CELL_SIZE / 2,
-          y + CELL_SIZE / 2,
-          cell === 'o' ? 5 + Math.sin(game.tick / 3) * 1.2 : 2.5,
-          0,
-          Math.PI * 2,
-        )
-        context.fill()
+      if (game.ghost.row === rowIndex && game.ghost.col === colIndex) {
+        return getGhostGlyph(game.poweredTicks)
       }
-    })
+
+      if (cell === '#') return '#'
+      if (cell === '.') return '.'
+      if (cell === 'o') return 'o'
+      return ' '
+    }).join('')
+  })
+}
+
+function getPromptLine(game) {
+  if (game.status === 'ready') return 'press space to boot the level'
+  if (game.status === 'won') return 'maze clear // space to rerun'
+  if (game.status === 'lost') return 'system down // space to rerun'
+  if (game.poweredTicks > 0) return 'power live // hunt the sentinel'
+  return 'clear the field // avoid contact'
+}
+
+function buildBoardText(game, statusLabel) {
+  const contentWidth = 35
+  const mazeRows = buildMazeRows(game)
+  const progressLine = `score ${String(game.score).padStart(4, '0')}  pellets ${String(game.totalPellets - game.pelletsRemaining).padStart(3, '0')}/${String(game.totalPellets).padStart(3, '0')}`
+  const stateLine = `mode ${statusLabel.padEnd(12, ' ')} ${game.poweredTicks > 0 ? `pow ${String(game.poweredTicks).padStart(2, '0')}` : 'pow --'}`
+  const border = `+${'-'.repeat(contentWidth + 2)}+`
+
+  return [
+    border,
+    `| ${padLine('PAC-01 // PRETEXT GLYPH MAZE', contentWidth)} |`,
+    `| ${padLine(progressLine, contentWidth)} |`,
+    `| ${padLine(stateLine, contentWidth)} |`,
+    `| ${' '.repeat(contentWidth)} |`,
+    ...mazeRows.map((row) => `| ${centerLine(row, contentWidth)} |`),
+    `| ${' '.repeat(contentWidth)} |`,
+    `| ${padLine(getPromptLine(game), contentWidth)} |`,
+    `| ${padLine('arrows / wasd move    space resets', contentWidth)} |`,
+    border,
+  ].join('\n')
+}
+
+function drawScanlines(context, width, height) {
+  context.fillStyle = 'rgba(255, 255, 255, 0.045)'
+  for (let y = 0; y < height; y += 4) {
+    context.fillRect(0, y, width, 1)
+  }
+}
+
+function drawBoard(canvas, boardText, fontReady) {
+  if (!canvas) return
+
+  const bounds = canvas.getBoundingClientRect()
+  const width = Math.max(Math.floor(bounds.width), 360)
+  const height = Math.max(Math.floor(bounds.height), 520)
+  const dpr = window.devicePixelRatio || 1
+
+  canvas.width = width * dpr
+  canvas.height = height * dpr
+
+  const context = canvas.getContext('2d')
+  context.setTransform(dpr, 0, 0, dpr, 0, 0)
+  context.clearRect(0, 0, width, height)
+
+  const background = context.createLinearGradient(0, 0, width, height)
+  background.addColorStop(0, '#020713')
+  background.addColorStop(0.52, '#07182f')
+  background.addColorStop(1, '#020305')
+  context.fillStyle = background
+  context.fillRect(0, 0, width, height)
+
+  context.strokeStyle = 'rgba(115, 231, 255, 0.18)'
+  context.strokeRect(0.5, 0.5, width - 1, height - 1)
+
+  const layout = fitPretextBlock(
+    boardText,
+    width - BOARD_TEXT_PADDING * 2,
+    height - BOARD_TEXT_PADDING * 2,
+    fontReady ? 26 : 20,
+    11,
+    1.2,
+  )
+
+  if (!layout) return
+
+  const startX = BOARD_TEXT_PADDING
+  const startY = BOARD_TEXT_PADDING + layout.lineHeight
+  const mazeStartLine = 5
+  const mazeEndLine = layout.lines.length - 4
+
+  context.textBaseline = 'alphabetic'
+  context.font = layout.font
+  context.shadowBlur = 8
+
+  layout.lines.forEach((line, index) => {
+    if (index === 1) {
+      context.fillStyle = '#fff2a3'
+      context.shadowColor = 'rgba(255, 230, 109, 0.26)'
+    } else if (index <= 3) {
+      context.fillStyle = '#7be7ff'
+      context.shadowColor = 'rgba(123, 231, 255, 0.2)'
+    } else if (index >= mazeStartLine && index <= mazeEndLine) {
+      context.fillStyle = '#9cf6b0'
+      context.shadowColor = 'rgba(156, 246, 176, 0.14)'
+    } else {
+      context.fillStyle = '#d8f8de'
+      context.shadowColor = 'rgba(216, 248, 222, 0.12)'
+    }
+
+    context.fillText(line.text || ' ', startX, startY + index * layout.lineHeight)
   })
 
-  const pacmanX = game.pacman.col * CELL_SIZE + CELL_SIZE / 2
-  const pacmanY = game.pacman.row * CELL_SIZE + CELL_SIZE / 2
-  const mouth = 0.25 + Math.abs(Math.sin(game.tick / 2.4)) * 0.22
-
-  context.beginPath()
-  context.moveTo(pacmanX, pacmanY)
-  context.fillStyle = '#ffd84d'
-  context.arc(
-    pacmanX,
-    pacmanY,
-    CELL_SIZE * 0.42,
-    DIRECTIONS[game.pacman.dir].angle + mouth,
-    DIRECTIONS[game.pacman.dir].angle + Math.PI * 2 - mouth,
-  )
-  context.closePath()
-  context.fill()
-
-  const ghostX = game.ghost.col * CELL_SIZE + CELL_SIZE / 2
-  const ghostY = game.ghost.row * CELL_SIZE + CELL_SIZE / 2
-  const ghostSize = CELL_SIZE * 0.38
-  context.beginPath()
-  context.moveTo(ghostX - ghostSize, ghostY + ghostSize)
-  context.lineTo(ghostX - ghostSize, ghostY)
-  context.arc(ghostX, ghostY, ghostSize, Math.PI, 0)
-  context.lineTo(ghostX + ghostSize, ghostY + ghostSize)
-  context.lineTo(ghostX + ghostSize * 0.5, ghostY + ghostSize * 0.72)
-  context.lineTo(ghostX, ghostY + ghostSize)
-  context.lineTo(ghostX - ghostSize * 0.5, ghostY + ghostSize * 0.72)
-  context.closePath()
-  context.fillStyle = game.poweredTicks > 0 ? '#6fd7ff' : '#ff5b5b'
-  context.fill()
-
-  context.fillStyle = '#f3f7ff'
-  context.beginPath()
-  context.arc(ghostX - 6, ghostY + 1, 4, 0, Math.PI * 2)
-  context.arc(ghostX + 6, ghostY + 1, 4, 0, Math.PI * 2)
-  context.fill()
-
-  context.fillStyle = '#03142b'
-  context.beginPath()
-  context.arc(ghostX - 6 + (game.poweredTicks > 0 ? -1 : 1), ghostY + 1, 1.5, 0, Math.PI * 2)
-  context.arc(ghostX + 6 + (game.poweredTicks > 0 ? -1 : 1), ghostY + 1, 1.5, 0, Math.PI * 2)
-  context.fill()
-
-  context.restore()
-
-  context.fillStyle = 'rgba(255, 255, 255, 0.08)'
-  for (let y = 0; y < BOARD_HEIGHT; y += 4) {
-    context.fillRect(0, y, BOARD_WIDTH, 1)
-  }
-
-  context.font = '14px "Departure Mono", monospace'
-  context.fillStyle = '#93f5a7'
-  context.fillText(`score ${String(game.score).padStart(4, '0')}`, 22, 20)
-  context.fillStyle = '#7bdcff'
-  context.fillText(`pellets ${game.totalPellets - game.pelletsRemaining}/${game.totalPellets}`, BOARD_WIDTH - 186, 20)
-
-  if (game.status !== 'running') {
-    context.fillStyle = 'rgba(1, 3, 12, 0.72)'
-    context.fillRect(BOARD_PADDING, BOARD_HEIGHT / 2 - 48, BOARD_WIDTH - BOARD_PADDING * 2, 92)
-    context.strokeStyle = '#6cf2ff'
-    context.strokeRect(BOARD_PADDING, BOARD_HEIGHT / 2 - 48, BOARD_WIDTH - BOARD_PADDING * 2, 92)
-    context.textAlign = 'center'
-    context.fillStyle = '#ffe35e'
-    context.font = '18px "Departure Mono", monospace'
-    const label = game.status === 'ready' ? 'PRESS SPACE TO START' : game.status === 'won' ? 'LEVEL CLEAR' : 'SYSTEM DOWN'
-    context.fillText(label, BOARD_WIDTH / 2, BOARD_HEIGHT / 2 - 4)
-    context.fillStyle = '#bdd3ff'
-    context.font = '12px "Departure Mono", monospace'
-    context.fillText('arrows / wasd to move | space to reset', BOARD_WIDTH / 2, BOARD_HEIGHT / 2 + 22)
-    context.textAlign = 'start'
-  }
+  context.shadowBlur = 0
+  drawScanlines(context, width, height)
 }
 
 function drawHud(canvas, briefing, fontReady) {
@@ -422,23 +466,30 @@ function drawHud(canvas, briefing, fontReady) {
   context.strokeStyle = 'rgba(123, 220, 255, 0.25)'
   context.strokeRect(0.5, 0.5, width - 1, height - 1)
 
+  const layout = fitPretextBlock(
+    briefing,
+    width - HUD_TEXT_PADDING * 2,
+    height - 56,
+    fontReady ? 14 : 12,
+    10,
+    1.35,
+  )
+
   context.fillStyle = '#fef3b2'
   context.font = '14px "Departure Mono", monospace'
-  context.fillText('PAC-01 // PRETEXT PANEL', 18, 24)
+  context.fillText('PAC-01 // PRETEXT PANEL', HUD_TEXT_PADDING, 24)
 
   context.fillStyle = '#6de0ff'
   context.font = '11px "Departure Mono", monospace'
-  context.fillText(fontReady ? 'font synced // canvas layout armed' : 'loading font metrics...', 18, 42)
+  context.fillText(fontReady ? 'font synced // canvas layout armed' : 'loading font metrics...', HUD_TEXT_PADDING, 42)
 
-  const font = '12px "Departure Mono"'
-  const prepared = prepareWithSegments(briefing, font, { whiteSpace: 'pre-wrap' })
-  const { lines } = layoutWithLines(prepared, width - 52, 17)
+  if (!layout) return
 
   context.fillStyle = '#d4f7db'
-  context.font = font
+  context.font = layout.font
 
-  lines.slice(0, Math.floor((height - 72) / 17)).forEach((line, index) => {
-    context.fillText(line.text || ' ', 18, 72 + index * 17)
+  layout.lines.forEach((line, index) => {
+    context.fillText(line.text || ' ', HUD_TEXT_PADDING, 68 + index * layout.lineHeight)
   })
 
   context.fillStyle = 'rgba(255, 255, 255, 0.06)'
@@ -462,6 +513,8 @@ export default function PacmanPage() {
         ? 'demo complete'
         : 'signal lost'
 
+  const boardText = useMemo(() => buildBoardText(game, statusLabel), [game, statusLabel])
+
   const briefing = useMemo(() => {
     return [
       `status: ${statusLabel}`,
@@ -469,16 +522,12 @@ export default function PacmanPage() {
       `pellets: ${game.totalPellets - game.pelletsRemaining}/${game.totalPellets}`,
       `ghost: ${game.poweredTicks > 0 ? 'frightened' : 'tracking'}`,
       '',
-      'one maze. one sentinel. no extra systems.',
-      'clear every pellet and flip the four power cells when you need breathing room.',
+      'this pass removes the shape renderer from the maze.',
+      'the board is now assembled as plain text rows and fit into the canvas by pretext using departure mono metrics.',
       '',
       'controls',
       '  arrows or wasd  move pacman',
       '  space           reset / start',
-      '',
-      'note',
-      '  this panel is rendered on canvas with departure mono.',
-      '  pretext computes the line layout before each draw instead of letting the dom wrap it.',
       '',
       'recent events',
       ...game.events.map((event) => `  - ${event.toLowerCase()}`),
@@ -490,7 +539,7 @@ export default function PacmanPage() {
 
     async function loadFont() {
       try {
-        await document.fonts.load('13px "Departure Mono"')
+        await document.fonts.load('24px "Departure Mono"')
         await document.fonts.ready
       } finally {
         if (!cancelled) {
@@ -579,13 +628,16 @@ export default function PacmanPage() {
     const canvas = boardCanvasRef.current
     if (!canvas) return
 
-    const dpr = window.devicePixelRatio || 1
-    canvas.width = BOARD_WIDTH * dpr
-    canvas.height = BOARD_HEIGHT * dpr
-    const context = canvas.getContext('2d')
-    context.setTransform(dpr, 0, 0, dpr, 0, 0)
-    drawMaze(context, game)
-  }, [game])
+    const redraw = () => drawBoard(canvas, boardText, fontReady)
+    redraw()
+
+    const observer = new ResizeObserver(redraw)
+    observer.observe(canvas)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [boardText, fontReady])
 
   useEffect(() => {
     const canvas = hudCanvasRef.current
@@ -614,11 +666,11 @@ export default function PacmanPage() {
         <header className="pacman-hero">
           <div>
             <p className="pacman-kicker">Departure Mono x Pretext</p>
-            <h1>Pacman, stripped down to one sharp little experiment.</h1>
+            <h1>Pacman rendered as a live text block.</h1>
           </div>
           <p className="pacman-summary">
-            A single-level arcade board with a terminal briefing panel. The maze is intentionally compact; the point here is the feel and the
-            text system, not full game complexity.
+            The maze is now a glyph-only composition. Every board line is built from the current game state, then measured and wrapped by
+            pretext before it is drawn.
           </p>
         </header>
 

@@ -103,11 +103,10 @@
 
 .pacman-board {
   display: block;
-  width: min(100%, 520px);
+  width: min(100%, 720px);
   margin: 0 auto;
-  height: auto;
+  height: clamp(520px, 72vh, 780px);
   border-radius: 18px;
-  image-rendering: pixelated;
 }
 
 .pacman-sidebar {
@@ -124,8 +123,7 @@
 
 .pacman-sidebar__canvas {
   width: 100%;
-  height: 100%;
-  min-height: 400px;
+  height: clamp(360px, 44vh, 480px);
   display: block;
   border-radius: 18px;
 }
@@ -224,6 +222,10 @@
   .pacman-board-card {
     padding: 0.65rem;
     border-radius: 22px;
+  }
+
+  .pacman-board {
+    height: clamp(460px, 64vh, 640px);
   }
 
   .pacman-sidebar__canvas-frame,
