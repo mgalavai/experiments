@@ -6,7 +6,6 @@ import FridayPlannerPage from './components/FridayPlannerPage'
 import ObjectivesTelemetryPage from './components/ObjectivesTelemetryPage'
 import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 import LogoPage from './components/LogoPage'
-import PacmanPage from './components/PacmanPage'
 
 const views = [
   {
@@ -34,11 +33,6 @@ const views = [
     label: 'Logo',
     element: <LogoPage />,
   },
-  {
-    path: '/pacman',
-    label: 'Pacman',
-    element: <PacmanPage />,
-  },
 ]
 
 function TopNav() {
@@ -47,11 +41,10 @@ function TopNav() {
   const isDigitalKeyRoute = location.pathname === '/digital-key'
   const isPlannerRoute = location.pathname === '/friday-planner'
   const isLogoRoute = location.pathname === '/logo'
-  const isPacmanRoute = location.pathname === '/pacman'
 
   return (
     <nav
-      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isPacmanRoute ? 'app-nav--pacman' : ''}`}
+      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''}`}
       aria-label="Views"
     >
       {views.map((view) => (
