@@ -299,6 +299,11 @@ button {
   background: var(--paper-main);
 }
 
+/* Hard pages rotate as a rigid sheet (no clip-path); allow shadows not to square-off at edges. */
+.planner-book .stf__item.--hard {
+  overflow: visible;
+}
+
 .planner-sheet {
   position: relative;
   width: 100%;

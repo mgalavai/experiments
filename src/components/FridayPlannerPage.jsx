@@ -303,7 +303,8 @@ function NotesPanel({ text }) {
   )
 }
 
-const PlannerPage = forwardRef(function PlannerPage({ side, tone, children, className = '', density = 'soft' }, ref) {
+/** Default hard: soft pages use clip-path curls that clip badly at the gutter; see StPageFlip HTML mode. */
+const PlannerPage = forwardRef(function PlannerPage({ side, tone, children, className = '', density = 'hard' }, ref) {
   return (
     <section ref={ref} className={`planner-sheet planner-sheet--${side} planner-sheet--${tone} ${className}`} data-density={density}>
       {children}
