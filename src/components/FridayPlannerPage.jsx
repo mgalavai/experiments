@@ -172,7 +172,17 @@ function getCurrentTimePosition(date) {
   return Math.min(100, Math.max(0, normalized))
 }
 
-function TimeScale({ currentTimeTop, currentTime, scheduleEntries }) {
+function TimeScale({ scheduleEntries }) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+  const currentTime = useMemo(() => formatCurrentTime(now), [now])
+  const currentTimeTop = useMemo(() => `${getCurrentTimePosition(now)}%`, [now])
+
   return (
     <div className="schedule-container">
       <div className="current-time-indicator" style={{ top: currentTimeTop }}>
@@ -314,16 +324,16 @@ const PlannerPage = forwardRef(function PlannerPage({ side, tone, children, clas
 
 function FridayPlannerBook() {
   const [activeTab, setActiveTab] = useState('Mar')
-  const [now, setNow] = useState(() => new Date())
+  /** Bumps on a slow tick so headers stay correct without re-creating flip-book `children` every second (breaks react-pageflip). */
+  const [calendarTick, setCalendarTick] = useState(0)
   const [tasks, setTasks] = useState(fridayTasks)
   const [weekendTasks, setWeekendTasks] = useState(saturdayTasks)
   const bookRef = useRef(null)
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      setNow(new Date())
-    }, 1000)
-
+      setCalendarTick((n) => n + 1)
+    }, 60_000)
     return () => window.clearInterval(intervalId)
   }, [])
 
@@ -339,14 +349,12 @@ function FridayPlannerBook() {
     )
   }
 
-  const today = useMemo(() => formatToday(now), [now])
+  const today = useMemo(() => formatToday(new Date()), [calendarTick])
   const nextDay = useMemo(() => {
-    const future = new Date(now)
+    const future = new Date()
     future.setDate(future.getDate() + 1)
     return formatToday(future)
-  }, [now])
-  const currentTime = useMemo(() => formatCurrentTime(now), [now])
-  const currentTimeTop = useMemo(() => `${getCurrentTimePosition(now)}%`, [now])
+  }, [calendarTick])
 
   const syncActiveTab = (pageIndex = 0) => {
     setActiveTab(pageIndex >= 2 ? 'Apr' : 'Mar')
@@ -391,7 +399,67 @@ function FridayPlannerBook() {
     startPage: 0,
     onInit: handleFlip,
     onFlip: handleFlip,
+    renderOnlyPageLengthChange: true,
   }
+
+  const flipBookChildren = useMemo(
+    () => [
+      <PlannerPage key="f-left" side="left" tone="friday" density="hard">
+        <PlannerHeader weekLabel="Week 12" dividerLabel="Spring Equinox" dayTitle={today.weekday} dateLabel={today.date} />
+        <TimeScale scheduleEntries={fridaySchedule} />
+      </PlannerPage>,
+
+      <PlannerPage key="f-right" side="right" tone="friday" density="hard">
+        <div className="corner-deco">
+          <div className="corner-dot" />
+          <div className="corner-dot corner-dot--soft" />
+        </div>
+
+        <h2 className="section-title">Priorities</h2>
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} onToggle={toggleTask} />
+          ))}
+        </ul>
+
+        <h2 className="section-title">Journal &amp; Notes</h2>
+        <NotesPanel
+          text={[
+            'Remember to ask Sarah about the new ceramic vases...',
+            'The matte finish works beautifully with the soft pinks.',
+          ]}
+        />
+      </PlannerPage>,
+
+      <PlannerPage key="s-left" side="left" tone="saturday" density="hard">
+        <PlannerHeader weekLabel="Weekend" dividerLabel="Next Page" dayTitle="Saturday" dateLabel={nextDay.date} />
+        <TimeScale scheduleEntries={saturdaySchedule} />
+      </PlannerPage>,
+
+      <PlannerPage key="s-right" side="right" tone="saturday" density="hard">
+        <div className="corner-deco">
+          <div className="corner-dot" />
+          <div className="corner-dot corner-dot--soft" />
+        </div>
+
+        <h2 className="section-title">Weekend Priorities</h2>
+        <ul className="task-list">
+          {weekendTasks.map((task) => (
+            <TaskItem key={task.id} task={task} onToggle={toggleWeekendTask} />
+          ))}
+        </ul>
+
+        <h2 className="section-title">Journal &amp; Notes</h2>
+        <NotesPanel
+          text={[
+            'Keep the palette soft, then hand off the dense work to the afternoon shift.',
+            'Drag the corner back to Friday when the studio closes.',
+          ]}
+        />
+      </PlannerPage>,
+    ],
+    [today.weekday, today.date, nextDay.date, tasks, weekendTasks],
+  )
 
   return (
     <main className="desk-surface">
@@ -402,61 +470,7 @@ function FridayPlannerBook() {
         ))}
       </section>
 
-      <HTMLFlipBook {...flipbookProps}>
-        <PlannerPage side="left" tone="friday">
-          <PlannerHeader weekLabel="Week 12" dividerLabel="Spring Equinox" dayTitle={today.weekday} dateLabel={today.date} />
-          <TimeScale currentTimeTop={currentTimeTop} currentTime={currentTime} scheduleEntries={fridaySchedule} />
-        </PlannerPage>
-
-        <PlannerPage side="right" tone="friday">
-          <div className="corner-deco">
-            <div className="corner-dot" />
-            <div className="corner-dot corner-dot--soft" />
-          </div>
-
-          <h2 className="section-title">Priorities</h2>
-          <ul className="task-list">
-            {tasks.map((task) => (
-              <TaskItem key={task.id} task={task} onToggle={toggleTask} />
-            ))}
-          </ul>
-
-          <h2 className="section-title">Journal &amp; Notes</h2>
-          <NotesPanel
-            text={[
-              'Remember to ask Sarah about the new ceramic vases...',
-              'The matte finish works beautifully with the soft pinks.',
-            ]}
-          />
-        </PlannerPage>
-
-        <PlannerPage side="left" tone="saturday">
-          <PlannerHeader weekLabel="Weekend" dividerLabel="Next Page" dayTitle="Saturday" dateLabel={nextDay.date} />
-          <TimeScale currentTimeTop={currentTimeTop} currentTime={currentTime} scheduleEntries={saturdaySchedule} />
-        </PlannerPage>
-
-        <PlannerPage side="right" tone="saturday">
-          <div className="corner-deco">
-            <div className="corner-dot" />
-            <div className="corner-dot corner-dot--soft" />
-          </div>
-
-          <h2 className="section-title">Weekend Priorities</h2>
-          <ul className="task-list">
-            {weekendTasks.map((task) => (
-              <TaskItem key={task.id} task={task} onToggle={toggleWeekendTask} />
-            ))}
-          </ul>
-
-          <h2 className="section-title">Journal &amp; Notes</h2>
-          <NotesPanel
-            text={[
-              'Keep the palette soft, then hand off the dense work to the afternoon shift.',
-              'Drag the corner back to Friday when the studio closes.',
-            ]}
-          />
-        </PlannerPage>
-      </HTMLFlipBook>
+      <HTMLFlipBook {...flipbookProps}>{flipBookChildren}</HTMLFlipBook>
     </main>
   )
 }
