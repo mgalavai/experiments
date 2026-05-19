@@ -1,41 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import HTMLFlipBook from 'react-pageflip'
 
 const monthTabs = ['Jan', 'Feb', 'Mar', 'Apr', 'May']
 
 const fridaySchedule = [
-  {
-    id: 'botanical-sourcing',
-    time: '09:00 - 10:30',
-    title: 'Botanical Sourcing & Vendor Calls',
-  },
-  {
-    id: 'lunch',
-    time: '11:50 - 12:30',
-    title: 'Lunch Break',
-  },
-  {
-    id: 'review',
-    time: '14:30 - 16:00',
-    title: 'Review Q2 Floral Arrangements Design Mockups',
-  },
+  { id: 'botanical-sourcing', time: '09:00 - 10:30', title: 'Botanical Sourcing & Vendor Calls' },
+  { id: 'lunch', time: '11:50 - 12:30', title: 'Lunch Break' },
+  { id: 'review', time: '14:30 - 16:00', title: 'Review Q2 Floral Arrangements Design Mockups' },
 ]
 
 const saturdaySchedule = [
-  {
-    id: 'market-run',
-    time: '08:30 - 09:45',
-    title: 'Market Stem Run & Color Checks',
-  },
-  {
-    id: 'conditioning',
-    time: '10:00 - 11:15',
-    title: 'Condition Arrivals for Afternoon Orders',
-  },
-  {
-    id: 'sample-review',
-    time: '14:00 - 15:30',
-    title: 'Client Sample Review and Bouquet Refinements',
-  },
+  { id: 'market-run', time: '08:30 - 09:45', title: 'Market Stem Run & Color Checks' },
+  { id: 'conditioning', time: '10:00 - 11:15', title: 'Condition Arrivals for Afternoon Orders' },
+  { id: 'sample-review', time: '14:00 - 15:30', title: 'Client Sample Review and Bouquet Refinements' },
 ]
 
 const fridayTasks = [
@@ -52,20 +29,11 @@ const fridayTasks = [
     meta: 'Due 2:00 PM',
     completed: false,
   },
-  {
-    id: 'copy',
-    title: 'Draft copy for the bespoke wedding bouquet brochure.',
-    completed: false,
-  },
+  { id: 'copy', title: 'Draft copy for the bespoke wedding bouquet brochure.', completed: false },
 ]
 
 const saturdayTasks = [
-  {
-    id: 'vases',
-    title: 'Confirm vessel counts and polished ceramic vases.',
-    tag: 'Studio',
-    completed: false,
-  },
+  { id: 'vases', title: 'Confirm vessel counts and polished ceramic vases.', tag: 'Studio', completed: false },
   {
     id: 'delivery',
     title: 'Check delivery windows for the early market arrivals.',
@@ -73,11 +41,7 @@ const saturdayTasks = [
     meta: 'Before noon',
     completed: true,
   },
-  {
-    id: 'handoff',
-    title: 'Prepare the weekend handoff notes for the evening shift.',
-    completed: false,
-  },
+  { id: 'handoff', title: 'Prepare the weekend handoff notes for the evening shift.', completed: false },
 ]
 
 function RingGroup() {
@@ -86,17 +50,6 @@ function RingGroup() {
       <div className="hole left" />
       <div className="ring" />
       <div className="hole right" />
-    </div>
-  )
-}
-
-/** Binder rings sit on the turning sheet so they move with the hinge (no separate spine layer). */
-function GutterRingsStrip() {
-  return (
-    <div className="planner-gutter-rings" aria-hidden="true">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <RingGroup key={index} />
-      ))}
     </div>
   )
 }
@@ -184,12 +137,14 @@ function getCurrentTimePosition(date) {
 
 function TimeScale({ scheduleEntries }) {
   const [now, setNow] = useState(() => new Date())
+
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setNow(new Date())
     }, 1000)
     return () => window.clearInterval(intervalId)
   }, [])
+
   const currentTime = useMemo(() => formatCurrentTime(now), [now])
   const currentTimeTop = useMemo(() => `${getCurrentTimePosition(now)}%`, [now])
 
@@ -225,10 +180,7 @@ function TimeScale({ scheduleEntries }) {
       <div className="time-block">
         <div className="time-label">12:00</div>
         <div className="time-line" />
-        <div
-          className="event event--neutral"
-          style={{ top: -10, height: 40 }}
-        >
+        <div className="event event--neutral" style={{ top: -10, height: 40 }}>
           <span className="event-time event-time--neutral">{scheduleEntries[1].time}</span>
           {scheduleEntries[1].title}
         </div>
@@ -310,37 +262,21 @@ function NotesPanel({ text }) {
   )
 }
 
-function PlannerPage({ side, tone, children, className = '' }) {
+const PlannerPage = forwardRef(function PlannerPage({ side, tone, children, className = '' }, ref) {
   return (
-    <section className={`planner-sheet planner-sheet--${side} planner-sheet--${tone} ${className}`.trim()}>
+    <section ref={ref} className={`planner-sheet planner-sheet--${side} planner-sheet--${tone} ${className}`.trim()}>
       {children}
     </section>
   )
-}
-
-const PEEL_MS = 780
-const PEEL_EASE = 'cubic-bezier(0.25, 0.82, 0.2, 1)'
+})
 
 function FridayPlannerBook() {
   const [activeTab, setActiveTab] = useState('Mar')
   const [calendarTick, setCalendarTick] = useState(0)
   const [tasks, setTasks] = useState(fridayTasks)
   const [weekendTasks, setWeekendTasks] = useState(saturdayTasks)
-
-  const [spread, setSpread] = useState(0)
-  /** idle | fwd | backSnap | backRun */
-  const [flipAnim, setFlipAnim] = useState('idle')
-  const [dragDeg, setDragDeg] = useState(null)
-  const dragStart = useRef({ x: 0 })
-
-  const spreadRef = useRef(0)
-  const flipAnimRef = useRef('idle')
-  useEffect(() => {
-    spreadRef.current = spread
-  }, [spread])
-  useEffect(() => {
-    flipAnimRef.current = flipAnim
-  }, [flipAnim])
+  const [flipState, setFlipState] = useState('read')
+  const bookRef = useRef(null)
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -372,109 +308,71 @@ function FridayPlannerBook() {
     return formatToday(future)
   }, [calendarTick])
 
-  const syncActiveTab = useCallback((s) => {
-    setActiveTab(s >= 1 ? 'Apr' : 'Mar')
-  }, [])
-
-  const finishForward = useCallback(() => {
-    setSpread(1)
-    setFlipAnim('idle')
-    syncActiveTab(1)
-  }, [syncActiveTab])
-
-  const finishBack = useCallback(() => {
-    setSpread(0)
-    setFlipAnim('idle')
-    syncActiveTab(0)
-  }, [syncActiveTab])
-
-  const startForward = useCallback(() => {
-    if (spreadRef.current !== 0 || flipAnimRef.current !== 'idle') return
-    setDragDeg(null)
-    setFlipAnim('fwd')
-  }, [])
-
-  const startBack = useCallback(() => {
-    if (spreadRef.current !== 1 || flipAnimRef.current !== 'idle') return
-    setDragDeg(null)
-    setFlipAnim('backSnap')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setFlipAnim('backRun')
-      })
-    })
-  }, [])
-
-  const onFriPivotTransitionEnd = (event) => {
-    if (event.propertyName !== 'transform') return
-    if (flipAnim === 'fwd') finishForward()
+  const syncActiveTab = (pageIndex = 0) => {
+    setActiveTab(pageIndex >= 2 ? 'Apr' : 'Mar')
   }
 
-  const onBackOverlayTransitionEnd = (event) => {
-    if (event.propertyName !== 'transform') return
-    if (flipAnim === 'backRun') finishBack()
+  const handleFlip = (event) => {
+    const rawPage = typeof event?.data === 'number' ? event.data : event?.data?.page
+    syncActiveTab(Number(rawPage) || 0)
+  }
+
+  const handleFlipState = (event) => {
+    setFlipState(String(event?.data || 'read'))
   }
 
   const handleTabSelect = (tab) => {
     setActiveTab(tab)
-    if (tab === 'Apr' && spreadRef.current < 1) startForward()
-    if (tab === 'Mar' && spreadRef.current >= 1) startBack()
-  }
 
-  const friPivotStyle = (() => {
-    if (spread !== 0) {
-      return { transform: 'rotateY(0deg)', transition: 'none' }
+    const flip = bookRef.current?.pageFlip?.()
+    if (!flip) return
+
+    if (tab === 'Apr' && flip.getCurrentPageIndex() < 2) {
+      flip.flipNext('bottom')
     }
-    if (dragDeg !== null) {
-      return { transform: `rotateY(${dragDeg}deg)`, transition: 'none' }
-    }
-    if (flipAnim === 'fwd') {
-      return { transform: 'rotateY(-178deg)', transition: `transform ${PEEL_MS}ms ${PEEL_EASE}` }
-    }
-    return { transform: 'rotateY(0deg)', transition: 'none' }
-  })()
 
-  const backOverlayPivotStyle =
-    flipAnim === 'backSnap'
-      ? { transform: 'rotateY(-178deg)', transition: 'none' }
-      : flipAnim === 'backRun'
-        ? { transform: 'rotateY(0deg)', transition: `transform ${PEEL_MS}ms ${PEEL_EASE}` }
-        : { transform: 'rotateY(0deg)', transition: 'none' }
-
-  const onCornerPointerDown = (e) => {
-    if (spread !== 0 || flipAnim !== 'idle') return
-    if (e.button !== undefined && e.button !== 0) return
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragStart.current = { x: e.clientX }
-    setDragDeg(0)
-  }
-
-  const onCornerPointerMove = (e) => {
-    if (dragDeg === null) return
-    const delta = e.clientX - dragStart.current.x
-    const next = Math.max(-178, Math.min(0, delta * 0.45))
-    setDragDeg(next)
-  }
-
-  const onCornerPointerUp = (e) => {
-    if (dragDeg === null) return
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch {
-      /* ignore */
-    }
-    if (dragDeg < -88) {
-      setDragDeg(null)
-      setFlipAnim('fwd')
-    } else {
-      setDragDeg(null)
+    if (tab === 'Mar' && flip.getCurrentPageIndex() >= 2) {
+      flip.flipPrev('bottom')
     }
   }
 
-  const renderFridayRight = (withGrab, grabKey) => (
-    <>
-      <GutterRingsStrip />
-      <PlannerPage side="right" tone="friday">
+  const flipbookProps = {
+    ref: bookRef,
+    className: 'planner-book planner-book--library',
+    width: 500,
+    height: 700,
+    size: 'fixed',
+    minWidth: 500,
+    maxWidth: 500,
+    minHeight: 700,
+    maxHeight: 700,
+    showCover: false,
+    autoSize: false,
+    drawShadow: true,
+    maxShadowOpacity: 0.72,
+    flippingTime: 1150,
+    usePortrait: false,
+    mobileScrollSupport: true,
+    clickEventForward: true,
+    useMouseEvents: true,
+    disableFlipByClick: true,
+    swipeDistance: 18,
+    startPage: 0,
+    startZIndex: 20,
+    onInit: handleFlip,
+    onFlip: handleFlip,
+    onChangeState: handleFlipState,
+    renderOnlyPageLengthChange: true,
+  }
+
+  const flipBookChildren = useMemo(
+    () => [
+      <PlannerPage key="f-left" side="left" tone="friday">
+        <PlannerHeader weekLabel="Week 12" dividerLabel="Spring Equinox" dayTitle={today.weekday} dateLabel={today.date} />
+        <TimeScale scheduleEntries={fridaySchedule} />
+      </PlannerPage>,
+
+      <PlannerPage key="f-right" side="right" tone="friday">
         <div className="corner-deco">
           <div className="corner-dot" />
           <div className="corner-dot corner-dot--soft" />
@@ -494,95 +392,50 @@ function FridayPlannerBook() {
             'The matte finish works beautifully with the soft pinks.',
           ]}
         />
-      </PlannerPage>
-      {withGrab ? (
-        <div
-          key={grabKey}
-          className="planner-corner-grab"
-          aria-hidden="true"
-          onPointerDown={onCornerPointerDown}
-          onPointerMove={onCornerPointerMove}
-          onPointerUp={onCornerPointerUp}
-          onPointerCancel={onCornerPointerUp}
+      </PlannerPage>,
+
+      <PlannerPage key="s-left" side="left" tone="saturday">
+        <PlannerHeader weekLabel="Weekend" dividerLabel="Next Page" dayTitle="Saturday" dateLabel={nextDay.date} />
+        <TimeScale scheduleEntries={saturdaySchedule} />
+      </PlannerPage>,
+
+      <PlannerPage key="s-right" side="right" tone="saturday">
+        <div className="corner-deco">
+          <div className="corner-dot" />
+          <div className="corner-dot corner-dot--soft" />
+        </div>
+
+        <h2 className="section-title">Weekend Priorities</h2>
+        <ul className="task-list">
+          {weekendTasks.map((task) => (
+            <TaskItem key={task.id} task={task} onToggle={toggleWeekendTask} />
+          ))}
+        </ul>
+
+        <h2 className="section-title">Journal &amp; Notes</h2>
+        <NotesPanel
+          text={[
+            'Keep the palette soft, then hand off the dense work to the afternoon shift.',
+            'Drag the corner back to Friday when the studio closes.',
+          ]}
         />
-      ) : null}
-    </>
+      </PlannerPage>,
+    ],
+    [today.weekday, today.date, nextDay.date, tasks, weekendTasks],
   )
 
+  const isTurning = flipState === 'flipping' || flipState === 'user_fold' || flipState === 'fold_corner'
+
   return (
-    <main className="desk-surface">
+    <main className={`desk-surface ${isTurning ? 'is-turning' : ''}`}>
       <PlannerTabs activeTab={activeTab} setActiveTab={handleTabSelect} />
+      <section className="spine" aria-hidden="true">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <RingGroup key={index} />
+        ))}
+      </section>
 
-      <div className="planner-book planner-book--native planner-book">
-        <div className="planner-stack">
-          <div
-            className="planner-spread-layer planner-spread-layer--sat"
-            data-active={spread === 1 ? 'true' : 'false'}
-          >
-            <PlannerPage side="left" tone="saturday">
-              <PlannerHeader weekLabel="Weekend" dividerLabel="Next Page" dayTitle="Saturday" dateLabel={nextDay.date} />
-              <TimeScale scheduleEntries={saturdaySchedule} />
-            </PlannerPage>
-            <div className="planner-right-pivot">
-              <GutterRingsStrip />
-              <PlannerPage side="right" tone="saturday">
-                <div className="corner-deco">
-                  <div className="corner-dot" />
-                  <div className="corner-dot corner-dot--soft" />
-                </div>
-
-                <h2 className="section-title">Weekend Priorities</h2>
-                <ul className="task-list">
-                  {weekendTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} onToggle={toggleWeekendTask} />
-                  ))}
-                </ul>
-
-                <h2 className="section-title">Journal &amp; Notes</h2>
-                <NotesPanel
-                  text={[
-                    'Keep the palette soft, then hand off the dense work to the afternoon shift.',
-                    'Drag the corner back to Friday when the studio closes.',
-                  ]}
-                />
-              </PlannerPage>
-            </div>
-          </div>
-
-          <div
-            className="planner-spread-layer planner-spread-layer--fri"
-            data-active={spread === 0 ? 'true' : 'false'}
-          >
-            <PlannerPage side="left" tone="friday">
-              <PlannerHeader weekLabel="Week 12" dividerLabel="Spring Equinox" dayTitle={today.weekday} dateLabel={today.date} />
-              <TimeScale scheduleEntries={fridaySchedule} />
-            </PlannerPage>
-            <div
-              className="planner-right-pivot"
-              style={friPivotStyle}
-              onTransitionEnd={onFriPivotTransitionEnd}
-            >
-              {renderFridayRight(true, 'fri-grab-main')}
-            </div>
-          </div>
-
-          {(flipAnim === 'backSnap' || flipAnim === 'backRun') && (
-            <div className="planner-spread-layer planner-spread-layer--fri planner-spread-layer--overlay">
-              <PlannerPage side="left" tone="friday">
-                <PlannerHeader weekLabel="Week 12" dividerLabel="Spring Equinox" dayTitle={today.weekday} dateLabel={today.date} />
-                <TimeScale scheduleEntries={fridaySchedule} />
-              </PlannerPage>
-              <div
-                className="planner-right-pivot"
-                style={backOverlayPivotStyle}
-                onTransitionEnd={onBackOverlayTransitionEnd}
-              >
-                {renderFridayRight(false, 'fri-overlay')}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <HTMLFlipBook {...flipbookProps}>{flipBookChildren}</HTMLFlipBook>
     </main>
   )
 }

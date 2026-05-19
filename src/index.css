@@ -282,78 +282,34 @@ button {
   pointer-events: none;
 }
 
-.planner-book--native .planner-stack {
-  position: relative;
+.planner-book .stf__wrapper,
+.planner-book .stf__block {
   width: 100%;
   height: 100%;
-  perspective: 2200px;
-  transform-style: preserve-3d;
 }
 
-.planner-spread-layer {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  transform-style: preserve-3d;
+.planner-book .stf__block {
+  perspective: 2400px;
+  overflow: visible;
 }
 
-.planner-spread-layer[data-active='true'] {
-  z-index: 2;
+.planner-book .stf__item {
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--paper-main);
 }
 
-.planner-spread-layer[data-active='false'] {
-  z-index: 0;
+.planner-book .stf__item.--left {
+  border-radius: 4px 0 0 4px;
 }
 
-.planner-spread-layer--overlay {
-  z-index: 10;
+.planner-book .stf__item.--right {
+  border-radius: 0 12px 12px 0;
 }
 
-.planner-spread-layer > .planner-sheet {
-  flex: 0 0 500px;
-  width: 500px;
-}
-
-.planner-right-pivot {
-  position: relative;
-  flex: 0 0 500px;
-  width: 500px;
-  height: 100%;
-  transform-style: preserve-3d;
-  transform-origin: left center;
-  backface-visibility: hidden;
-}
-
-.planner-gutter-rings {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 40px;
-  transform: translateX(-50%);
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  padding: 40px 0;
-  pointer-events: none;
-}
-
-.planner-corner-grab {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 120px;
-  height: 120px;
-  cursor: grab;
-  touch-action: none;
-  z-index: 8;
-}
-
-.planner-corner-grab:active {
-  cursor: grabbing;
+.planner-book .stf__item.--soft {
+  overflow: hidden;
+  filter: drop-shadow(-18px 16px 26px rgba(0, 0, 0, 0.09));
 }
 
 .planner-sheet {
@@ -386,6 +342,28 @@ button {
 
 .planner-sheet .section-title {
   z-index: 1;
+}
+
+.spine {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate3d(-50%, 0, 38px);
+  width: 30px;
+  height: 100%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 40px 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  transition: opacity 140ms ease;
+}
+
+.desk-surface.is-turning .spine {
+  opacity: 0;
 }
 
 .ring-group {
@@ -756,7 +734,7 @@ button {
     transform: scale(0.64);
   }
 
-  .planner-gutter-rings {
+  .spine {
     display: none;
   }
 
