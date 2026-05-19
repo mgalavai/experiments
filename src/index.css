@@ -282,26 +282,78 @@ button {
   pointer-events: none;
 }
 
-.planner-book .stf__wrapper,
-.planner-book .stf__block {
+.planner-book--native .planner-stack {
+  position: relative;
   width: 100%;
   height: 100%;
-}
-
-.planner-book .stf__block {
   perspective: 2200px;
-  overflow: visible;
+  transform-style: preserve-3d;
 }
 
-.planner-book .stf__item {
-  box-sizing: border-box;
-  overflow: hidden;
-  background: var(--paper-main);
+.planner-spread-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  transform-style: preserve-3d;
 }
 
-/* Hard pages rotate as a rigid sheet (no clip-path); allow shadows not to square-off at edges. */
-.planner-book .stf__item.--hard {
-  overflow: visible;
+.planner-spread-layer[data-active='true'] {
+  z-index: 2;
+}
+
+.planner-spread-layer[data-active='false'] {
+  z-index: 0;
+}
+
+.planner-spread-layer--overlay {
+  z-index: 10;
+}
+
+.planner-spread-layer > .planner-sheet {
+  flex: 0 0 500px;
+  width: 500px;
+}
+
+.planner-right-pivot {
+  position: relative;
+  flex: 0 0 500px;
+  width: 500px;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  backface-visibility: hidden;
+}
+
+.planner-gutter-rings {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 40px 0;
+  pointer-events: none;
+}
+
+.planner-corner-grab {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 120px;
+  height: 120px;
+  cursor: grab;
+  touch-action: none;
+  z-index: 8;
+}
+
+.planner-corner-grab:active {
+  cursor: grabbing;
 }
 
 .planner-sheet {
@@ -334,24 +386,6 @@ button {
 
 .planner-sheet .section-title {
   z-index: 1;
-}
-
-.spine {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  /* Nudge toward the camera so rings stay above curling pages (same 3D scene as .planner-book). */
-  transform: translate3d(-50%, 0, 36px);
-  width: 30px;
-  height: 100%;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  padding: 40px 0;
-  pointer-events: none;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
 }
 
 .ring-group {
@@ -722,7 +756,7 @@ button {
     transform: scale(0.64);
   }
 
-  .spine {
+  .planner-gutter-rings {
     display: none;
   }
 
