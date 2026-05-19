@@ -183,6 +183,7 @@ button {
 .desk-surface {
   position: relative;
   perspective: 2000px;
+  transform-style: preserve-3d;
   width: 1000px;
   height: 700px;
   max-width: calc(100vw - 4rem);
@@ -334,20 +335,18 @@ button {
   position: absolute;
   top: 0;
   left: 50%;
-  transform: translateX(-50%);
+  /* Nudge toward the camera so rings stay above curling pages (same 3D scene as .planner-book). */
+  transform: translate3d(-50%, 0, 36px);
   width: 30px;
   height: 100%;
-  z-index: 5;
+  z-index: 40;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
   padding: 40px 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
-.desk-surface.is-turning .spine {
-  opacity: 0;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
 }
 
 .ring-group {
