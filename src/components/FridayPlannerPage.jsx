@@ -316,6 +316,7 @@ function FridayPlannerBook() {
   const [now, setNow] = useState(() => new Date())
   const [tasks, setTasks] = useState(fridayTasks)
   const [weekendTasks, setWeekendTasks] = useState(saturdayTasks)
+  const [flipState, setFlipState] = useState('read')
   const bookRef = useRef(null)
 
   useEffect(() => {
@@ -356,6 +357,10 @@ function FridayPlannerBook() {
     syncActiveTab(Number(rawPage) || 0)
   }
 
+  const handleFlipState = (event) => {
+    setFlipState(String(event?.data || 'read'))
+  }
+
   const handleTabSelect = (tab) => {
     setActiveTab(tab)
 
@@ -376,17 +381,13 @@ function FridayPlannerBook() {
     className: 'planner-book',
     width: 500,
     height: 700,
-    size: 'stretch',
-    minWidth: 360,
-    maxWidth: 500,
-    minHeight: 520,
-    maxHeight: 700,
+    size: 'fixed',
     showCover: false,
     autoSize: false,
     drawShadow: true,
     maxShadowOpacity: 0.55,
     flippingTime: 950,
-    usePortrait: true,
+    usePortrait: false,
     mobileScrollSupport: true,
     clickEventForward: true,
     useMouseEvents: true,
@@ -394,10 +395,13 @@ function FridayPlannerBook() {
     startPage: 0,
     onInit: handleFlip,
     onFlip: handleFlip,
+    onChangeState: handleFlipState,
   }
 
+  const isTurning = flipState === 'flipping' || flipState === 'user_fold' || flipState === 'fold_corner'
+
   return (
-    <main className="desk-surface">
+    <main className={`desk-surface ${isTurning ? 'is-turning' : ''}`}>
       <PlannerTabs activeTab={activeTab} setActiveTab={handleTabSelect} />
       <section className="spine" aria-hidden="true">
         {Array.from({ length: 6 }).map((_, index) => (

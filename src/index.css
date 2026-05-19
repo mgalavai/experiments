@@ -177,11 +177,16 @@ button {
   display: grid;
   place-items: center;
   padding: 5rem 2rem 2rem;
+  overflow: hidden;
 }
 
 .desk-surface {
   position: relative;
   perspective: 2000px;
+  width: 1000px;
+  height: 700px;
+  max-width: calc(100vw - 4rem);
+  transform-origin: center center;
 }
 
 .planner-tabs {
@@ -244,8 +249,8 @@ button {
 
 .planner-book {
   position: relative;
-  width: min(1000px, calc(100vw - 4rem));
-  height: min(700px, calc(100vh - 7rem));
+  width: 1000px;
+  height: 700px;
   margin: 0 auto;
   background: transparent;
   border-radius: 4px 12px 12px 4px;
@@ -284,10 +289,13 @@ button {
 
 .planner-book .stf__block {
   perspective: 2200px;
+  overflow: visible;
 }
 
 .planner-book .stf__item {
   box-sizing: border-box;
+  overflow: hidden;
+  background: var(--paper-main);
 }
 
 .planner-sheet {
@@ -335,6 +343,11 @@ button {
   justify-content: space-evenly;
   padding: 40px 0;
   pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.desk-surface.is-turning .spine {
+  opacity: 0;
 }
 
 .ring-group {
@@ -675,12 +688,14 @@ button {
 
 @media (max-width: 1120px) {
   .desk-surface {
-    width: min(100%, 1000px);
+    max-width: none;
+    transform: scale(0.9);
   }
+}
 
-  .planner-book {
-    width: min(1000px, calc(100vw - 2rem));
-    height: min(700px, calc(100vh - 6rem));
+@media (max-width: 960px) {
+  .desk-surface {
+    transform: scale(0.78);
   }
 }
 
@@ -700,12 +715,7 @@ button {
   }
 
   .desk-surface {
-    width: 100%;
-  }
-
-  .planner-book {
-    width: min(100%, calc(100vw - 1.5rem));
-    height: min(640px, calc(100vh - 6rem));
+    transform: scale(0.64);
   }
 
   .spine {
@@ -749,5 +759,11 @@ button {
   .event {
     left: 54px;
     right: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .desk-surface {
+    transform: scale(0.52);
   }
 }
