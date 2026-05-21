@@ -1,67 +1,48 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import './window-shake.css'
 
 const FRAME_THICKNESS = 18
-const WINDOW_MOTION_GAIN = 36
+const WINDOW_MOTION_GAIN = 34
 const WINDOW_MOTION_THRESHOLD = 0.65
-const WINDOW_CONFIGS = [
-  {
-    id: 'console',
-    title: 'Physics Console',
-    subtitle: 'Impulse stream',
-    x: 88,
-    y: 92,
-    width: 286,
-    height: 188,
-    vx: 58,
-    vy: 24,
-    hue: 'amber',
-  },
-  {
-    id: 'graph',
-    title: 'Collision Scope',
-    subtitle: 'X/Y response',
-    x: 514,
-    y: 78,
-    width: 336,
-    height: 226,
-    vx: -46,
-    vy: 38,
-    hue: 'cyan',
-  },
-  {
-    id: 'memo',
-    title: 'Pinned Note',
-    subtitle: 'Drag me',
-    x: 334,
-    y: 346,
-    width: 244,
-    height: 164,
-    vx: 36,
-    vy: -30,
-    hue: 'rose',
-  },
+const GRAVITY = 390
+const BALL_CONFIGS = [
+  { id: 'violet-a', x: 138, y: 142, radius: 39, vx: 54, vy: 12, color: '#3814a5', glow: '#7758ff' },
+  { id: 'teal-a', x: 238, y: 170, radius: 42, vx: -34, vy: 18, color: '#007f80', glow: '#34e6de' },
+  { id: 'red-a', x: 314, y: 178, radius: 40, vx: 28, vy: -16, color: '#8e0505', glow: '#ff4b38' },
+  { id: 'green-a', x: 405, y: 210, radius: 35, vx: -42, vy: 20, color: '#0b8d20', glow: '#58ff45' },
+  { id: 'orange-a', x: 105, y: 258, radius: 48, vx: 18, vy: -22, color: '#d8400c', glow: '#ffaf54' },
+  { id: 'yellow-a', x: 210, y: 270, radius: 49, vx: -18, vy: 26, color: '#9b7701', glow: '#fff25a' },
+  { id: 'red-b', x: 320, y: 292, radius: 42, vx: 22, vy: 18, color: '#b50808', glow: '#ff6861' },
+  { id: 'lime-a', x: 432, y: 304, radius: 47, vx: -22, vy: 14, color: '#9ab306', glow: '#fbff52' },
+  { id: 'cyan-a', x: 540, y: 304, radius: 43, vx: 24, vy: -18, color: '#00a9a8', glow: '#72ffff' },
+  { id: 'green-b', x: 640, y: 302, radius: 46, vx: -38, vy: 12, color: '#009038', glow: '#58ff8d' },
+  { id: 'green-c', x: 144, y: 400, radius: 43, vx: 34, vy: -14, color: '#0a9914', glow: '#72ff55' },
+  { id: 'magenta-a', x: 235, y: 412, radius: 45, vx: -28, vy: 12, color: '#8f009f', glow: '#ff75fa' },
+  { id: 'blue-a', x: 336, y: 420, radius: 48, vx: 24, vy: -20, color: '#0732a6', glow: '#3d83ff' },
+  { id: 'amber-a', x: 446, y: 414, radius: 44, vx: -14, vy: 16, color: '#a56f00', glow: '#ffd24f' },
+  { id: 'teal-b', x: 552, y: 420, radius: 47, vx: 16, vy: -12, color: '#008b86', glow: '#65fff6' },
+  { id: 'violet-b', x: 658, y: 422, radius: 49, vx: -20, vy: 14, color: '#2410a3', glow: '#6748ff' },
+  { id: 'pink-a', x: 116, y: 518, radius: 44, vx: 22, vy: -10, color: '#de14a5', glow: '#ff9bf5' },
+  { id: 'copper-a', x: 218, y: 538, radius: 43, vx: -16, vy: 8, color: '#a94912', glow: '#ffc07c' },
+  { id: 'blue-b', x: 326, y: 534, radius: 47, vx: 18, vy: -8, color: '#003ea8', glow: '#57a9ff' },
+  { id: 'green-d', x: 436, y: 538, radius: 45, vx: -20, vy: 10, color: '#00894a', glow: '#5dffa5' },
+  { id: 'green-e', x: 542, y: 534, radius: 46, vx: 18, vy: -8, color: '#029056', glow: '#68ffb5' },
 ]
-const INITIAL_METRICS = {
-  impacts: 0,
-  energy: 32,
-  motion: 0,
-}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
-function makeBody(config) {
+function makeBall(config) {
   return {
     ...config,
-    rotation: 0,
     spin: 0,
+    rotation: 0,
   }
 }
 
-function getSimulationBounds(desktop) {
-  if (!desktop) {
+function getSimulationBounds(stage) {
+  if (!stage) {
     return {
       width: 980,
       height: 620,
@@ -70,7 +51,7 @@ function getSimulationBounds(desktop) {
     }
   }
 
-  const rect = desktop.getBoundingClientRect()
+  const rect = stage.getBoundingClientRect()
   return {
     width: rect.width,
     height: rect.height,
@@ -86,114 +67,61 @@ function getBrowserWindowPosition() {
   }
 }
 
-function WindowPanel({ body, nodeRef, onPointerDown }) {
+function Ball({ ball, nodeRef, onPointerDown }) {
   return (
-    <article
+    <button
       ref={nodeRef}
-      className={`shake-window shake-window--${body.hue}`}
+      type="button"
+      className="shake-ball"
       style={{
-        '--panel-width': `${body.width}px`,
-        '--panel-height': `${body.height}px`,
+        '--ball-size': `${ball.radius * 2}px`,
+        '--ball-color': ball.color,
+        '--ball-glow': ball.glow,
       }}
-      onPointerDown={(event) => onPointerDown(event, body.id)}
-    >
-      <header className="shake-window__bar">
-        <div className="shake-window__lights" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div>
-          <h2>{body.title}</h2>
-          <p>{body.subtitle}</p>
-        </div>
-      </header>
-      <div className="shake-window__body">
-        {body.id === 'console' ? (
-          <div className="shake-console" aria-hidden="true">
-            <span>window.screenX/Y to inertial impulse</span>
-            <span>viewport.restitution = 0.82</span>
-            <span>motion.decay *= deltaTime</span>
-            <span>status: delightfully unstable</span>
-          </div>
-        ) : null}
-        {body.id === 'graph' ? (
-          <div className="shake-scope" aria-hidden="true">
-            {Array.from({ length: 28 }).map((_, index) => (
-              <span key={index} style={{ '--bar-height': `${28 + ((index * 19) % 68)}%` }} />
-            ))}
-          </div>
-        ) : null}
-        {body.id === 'memo' ? (
-          <div className="shake-note">
-            <span>Impact budget</span>
-            <strong>Shake the browser window until the desktop answers back.</strong>
-          </div>
-        ) : null}
-      </div>
-    </article>
+      aria-label="Physics ball"
+      onPointerDown={(event) => onPointerDown(event, ball.id)}
+    />
   )
 }
 
 export default function WindowShakePage() {
-  const desktopRef = useRef(null)
-  const frameRef = useRef(null)
-  const bodyRefs = useRef({})
-  const bodiesRef = useRef(WINDOW_CONFIGS.map(makeBody))
+  const stageRef = useRef(null)
+  const boxRef = useRef(null)
+  const ballRefs = useRef({})
+  const ballsRef = useRef(BALL_CONFIGS.map(makeBall))
   const dragRef = useRef(null)
   const lastTimeRef = useRef(0)
   const windowPositionRef = useRef(null)
-  const metricsRef = useRef(INITIAL_METRICS)
-  const [metrics, setMetrics] = useState(INITIAL_METRICS)
-  const [isGravityEnabled, setIsGravityEnabled] = useState(true)
-  const [isSlowMotion, setIsSlowMotion] = useState(false)
-
-  const syncMetrics = useCallback(() => {
-    setMetrics({ ...metricsRef.current })
-  }, [])
+  const motionRef = useRef(0)
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0 })
   }, [])
 
   const applyWindowImpulse = useCallback((deltaX, deltaY, strength) => {
-    metricsRef.current.motion = Math.min(100, metricsRef.current.motion + strength)
-    bodiesRef.current.forEach((body, index) => {
+    motionRef.current = Math.min(100, motionRef.current + strength)
+    ballsRef.current.forEach((ball, index) => {
       const direction = index % 2 === 0 ? 1 : -1
-      body.vx -= deltaX * WINDOW_MOTION_GAIN
-      body.vy -= deltaY * WINDOW_MOTION_GAIN
-      body.spin += direction * strength * 18 + deltaX * 6
+      ball.vx -= deltaX * WINDOW_MOTION_GAIN
+      ball.vy -= deltaY * WINDOW_MOTION_GAIN
+      ball.spin += direction * strength * 10 + deltaX * 5
     })
-    syncMetrics()
-  }, [syncMetrics])
+  }, [])
 
-  const applyManualImpulse = useCallback(() => {
-    applyWindowImpulse(6, -3, 30)
-  }, [applyWindowImpulse])
+  const handlePointerDown = useCallback((event, ballId) => {
+    const stage = stageRef.current
+    if (!stage) return
 
-  const resetExperiment = useCallback(() => {
-    bodiesRef.current = WINDOW_CONFIGS.map(makeBody)
-    dragRef.current = null
-    metricsRef.current = INITIAL_METRICS
-    windowPositionRef.current = getBrowserWindowPosition()
-    syncMetrics()
-  }, [syncMetrics])
+    const ball = ballsRef.current.find((item) => item.id === ballId)
+    if (!ball) return
 
-  const handlePointerDown = useCallback((event, bodyId) => {
-    const desktop = desktopRef.current
-    if (!desktop) return
-
-    const body = bodiesRef.current.find((item) => item.id === bodyId)
-    if (!body) return
-
-    const bounds = getSimulationBounds(desktop)
-
+    const bounds = getSimulationBounds(stage)
     dragRef.current = {
-      id: bodyId,
-      offsetX: event.clientX - bounds.left - body.x,
-      offsetY: event.clientY - bounds.top - body.y,
-      lastX: body.x,
-      lastY: body.y,
+      id: ballId,
+      offsetX: event.clientX - bounds.left - ball.x,
+      offsetY: event.clientY - bounds.top - ball.y,
+      lastX: ball.x,
+      lastY: ball.y,
     }
     event.currentTarget.setPointerCapture(event.pointerId)
   }, [])
@@ -201,26 +129,24 @@ export default function WindowShakePage() {
   useEffect(() => {
     const onPointerMove = (event) => {
       const drag = dragRef.current
-      const desktop = desktopRef.current
-      if (!drag || !desktop) return
+      const stage = stageRef.current
+      if (!drag || !stage) return
 
-      const body = bodiesRef.current.find((item) => item.id === drag.id)
-      if (!body) return
+      const ball = ballsRef.current.find((item) => item.id === drag.id)
+      if (!ball) return
 
-      const bounds = getSimulationBounds(desktop)
-      const maxX = Math.max(FRAME_THICKNESS, bounds.width - body.width - FRAME_THICKNESS)
-      const maxY = Math.max(FRAME_THICKNESS, bounds.height - body.height - FRAME_THICKNESS)
-      const nextX = clamp(event.clientX - bounds.left - drag.offsetX, FRAME_THICKNESS, maxX)
-      const nextY = clamp(event.clientY - bounds.top - drag.offsetY, FRAME_THICKNESS, maxY)
+      const bounds = getSimulationBounds(stage)
+      const nextX = clamp(event.clientX - bounds.left - drag.offsetX, FRAME_THICKNESS + ball.radius, bounds.width - FRAME_THICKNESS - ball.radius)
+      const nextY = clamp(event.clientY - bounds.top - drag.offsetY, FRAME_THICKNESS + ball.radius, bounds.height - FRAME_THICKNESS - ball.radius)
 
-      body.vx = (nextX - drag.lastX) * 12
-      body.vy = (nextY - drag.lastY) * 12
-      body.x = nextX
-      body.y = nextY
-      body.spin = body.vx * 0.04
+      ball.vx = (nextX - drag.lastX) * 12
+      ball.vy = (nextY - drag.lastY) * 12
+      ball.spin = ball.vx * 0.08
+      ball.x = nextX
+      ball.y = nextY
       drag.lastX = nextX
       drag.lastY = nextY
-      metricsRef.current.motion = Math.min(100, metricsRef.current.motion + 0.8)
+      motionRef.current = Math.min(100, motionRef.current + 1.2)
     }
 
     const onPointerUp = () => {
@@ -239,16 +165,13 @@ export default function WindowShakePage() {
 
   useEffect(() => {
     let frameId
-    let metricFrame = 0
 
     const tick = (time) => {
       const previousTime = lastTimeRef.current || time
       lastTimeRef.current = time
-      const timeScale = isSlowMotion ? 0.35 : 1
-      const dt = Math.min((time - previousTime) / 1000, 0.035) * timeScale
-      const gravity = isGravityEnabled ? 360 : 0
-      const bodies = bodiesRef.current
-      const bounds = getSimulationBounds(desktopRef.current)
+      const dt = Math.min((time - previousTime) / 1000, 0.035)
+      const balls = ballsRef.current
+      const bounds = getSimulationBounds(stageRef.current)
       const currentWindowPosition = getBrowserWindowPosition()
       let impactThisFrame = false
 
@@ -262,101 +185,102 @@ export default function WindowShakePage() {
       windowPositionRef.current = currentWindowPosition
 
       if (windowMotion > WINDOW_MOTION_THRESHOLD) {
-        applyWindowImpulse(windowDeltaX, windowDeltaY, Math.min(48, windowMotion * 1.4))
+        applyWindowImpulse(windowDeltaX, windowDeltaY, Math.min(54, windowMotion * 1.6))
       }
 
-      bodies.forEach((body) => {
-        const isDragging = dragRef.current?.id === body.id
+      balls.forEach((ball) => {
+        const isDragging = dragRef.current?.id === ball.id
 
         if (!isDragging) {
-          body.vy += gravity * dt
-          body.x += body.vx * dt
-          body.y += body.vy * dt
-          body.rotation += body.spin * dt
-          body.vx *= 0.992
-          body.vy *= 0.992
-          body.spin *= 0.986
+          ball.vy += GRAVITY * dt
+          ball.x += ball.vx * dt
+          ball.y += ball.vy * dt
+          ball.rotation += ball.spin * dt
+          ball.vx *= 0.991
+          ball.vy *= 0.991
+          ball.spin *= 0.987
         }
 
-        const maxX = Math.max(FRAME_THICKNESS, bounds.width - FRAME_THICKNESS - body.width)
-        const maxY = Math.max(FRAME_THICKNESS, bounds.height - FRAME_THICKNESS - body.height)
+        const minX = FRAME_THICKNESS + ball.radius
+        const maxX = Math.max(minX, bounds.width - FRAME_THICKNESS - ball.radius)
+        const minY = FRAME_THICKNESS + ball.radius
+        const maxY = Math.max(minY, bounds.height - FRAME_THICKNESS - ball.radius)
 
-        if (body.x < FRAME_THICKNESS || body.x > maxX) {
-          body.x = clamp(body.x, FRAME_THICKNESS, maxX)
-          body.vx *= -0.82
-          body.spin += body.vy * 0.08
+        if (ball.x < minX || ball.x > maxX) {
+          ball.x = clamp(ball.x, minX, maxX)
+          ball.vx *= -0.84
+          ball.spin -= ball.vy * 0.05
           impactThisFrame = true
         }
 
-        if (body.y < FRAME_THICKNESS || body.y > maxY) {
-          body.y = clamp(body.y, FRAME_THICKNESS, maxY)
-          body.vy *= -0.78
-          body.spin -= body.vx * 0.06
+        if (ball.y < minY || ball.y > maxY) {
+          ball.y = clamp(ball.y, minY, maxY)
+          ball.vy *= -0.78
+          ball.spin += ball.vx * 0.05
           impactThisFrame = true
         }
       })
 
-      for (let leftIndex = 0; leftIndex < bodies.length; leftIndex += 1) {
-        for (let rightIndex = leftIndex + 1; rightIndex < bodies.length; rightIndex += 1) {
-          const left = bodies[leftIndex]
-          const right = bodies[rightIndex]
-          const overlapX = Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x)
-          const overlapY = Math.min(left.y + left.height, right.y + right.height) - Math.max(left.y, right.y)
+      for (let leftIndex = 0; leftIndex < balls.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < balls.length; rightIndex += 1) {
+          const left = balls[leftIndex]
+          const right = balls[rightIndex]
+          const dx = right.x - left.x
+          const dy = right.y - left.y
+          const distance = Math.hypot(dx, dy) || 1
+          const minDistance = left.radius + right.radius
 
-          if (overlapX > 0 && overlapY > 0) {
-            const pushX = overlapX / 2 + 0.5
-            const pushY = overlapY / 2 + 0.5
+          if (distance < minDistance) {
+            const nx = dx / distance
+            const ny = dy / distance
+            const overlap = (minDistance - distance) / 2
+            left.x -= nx * overlap
+            left.y -= ny * overlap
+            right.x += nx * overlap
+            right.y += ny * overlap
 
-            if (overlapX < overlapY) {
-              const direction = left.x < right.x ? -1 : 1
-              left.x += direction * pushX
-              right.x -= direction * pushX
-              const leftVelocity = left.vx
-              left.vx = right.vx * 0.84
-              right.vx = leftVelocity * 0.84
-            } else {
-              const direction = left.y < right.y ? -1 : 1
-              left.y += direction * pushY
-              right.y -= direction * pushY
-              const leftVelocity = left.vy
-              left.vy = right.vy * 0.8
-              right.vy = leftVelocity * 0.8
+            const relativeVelocityX = right.vx - left.vx
+            const relativeVelocityY = right.vy - left.vy
+            const velocityAlongNormal = relativeVelocityX * nx + relativeVelocityY * ny
+
+            if (velocityAlongNormal < 0) {
+              const impulse = -(1.68 * velocityAlongNormal) / 2
+              const impulseX = impulse * nx
+              const impulseY = impulse * ny
+              left.vx -= impulseX
+              left.vy -= impulseY
+              right.vx += impulseX
+              right.vy += impulseY
+              left.spin -= impulse * 0.8
+              right.spin += impulse * 0.8
             }
 
-            left.spin -= 32
-            right.spin += 32
             impactThisFrame = true
           }
         }
       }
 
       if (impactThisFrame) {
-        metricsRef.current.impacts += 1
-        metricsRef.current.motion = Math.min(100, metricsRef.current.motion + 7)
+        motionRef.current = Math.min(100, motionRef.current + 5)
       }
 
-      metricsRef.current.motion *= 0.94
-      metricsRef.current.energy = Math.round(
-        bodies.reduce((total, body) => total + Math.abs(body.vx) + Math.abs(body.vy), 0) / 16,
-      )
+      motionRef.current *= 0.94
 
-      bodies.forEach((body) => {
-        const node = bodyRefs.current[body.id]
+      balls.forEach((ball) => {
+        const node = ballRefs.current[ball.id]
         if (node) {
-          node.style.transform = `translate3d(${body.x}px, ${body.y}px, 0) rotate(${body.rotation}deg)`
+          node.style.transform = `translate3d(${ball.x - ball.radius}px, ${ball.y - ball.radius}px, 0) rotate(${ball.rotation}deg)`
         }
       })
 
-      if (frameRef.current) {
-        const shake = metricsRef.current.motion
-        const wobbleX = Math.sin(time * 0.032) * shake * 0.09
-        const wobbleY = Math.cos(time * 0.041) * shake * 0.06
-        frameRef.current.style.transform = `translate3d(${wobbleX}px, ${wobbleY}px, 0)`
-        frameRef.current.style.setProperty('--shake-level', `${Math.round(shake)}%`)
+      if (boxRef.current) {
+        const motion = motionRef.current
+        const wobbleX = Math.sin(time * 0.032) * motion * 0.055
+        const wobbleY = Math.cos(time * 0.041) * motion * 0.04
+        boxRef.current.style.transform = `translate3d(${wobbleX}px, ${wobbleY}px, 0)`
+        boxRef.current.style.setProperty('--shake-level', `${Math.round(motion)}%`)
       }
 
-      metricFrame += 1
-      if (metricFrame % 8 === 0) syncMetrics()
       frameId = window.requestAnimationFrame(tick)
     }
 
@@ -365,7 +289,7 @@ export default function WindowShakePage() {
       window.cancelAnimationFrame(frameId)
       lastTimeRef.current = 0
     }
-  }, [applyWindowImpulse, isGravityEnabled, isSlowMotion, syncMetrics])
+  }, [applyWindowImpulse])
 
   return (
     <main className="window-shake-page">
@@ -373,49 +297,18 @@ export default function WindowShakePage() {
         <div className="shake-panel">
           <div className="shake-kicker">Experiment 05</div>
           <h1>Physics Engine Window Shake</h1>
-          <p>
-            Grab the actual browser window and shake it. The panels lag behind the moving viewport, collide, and rattle against the frame.
-          </p>
-          <div className="shake-controls" aria-label="Experiment controls">
-            <button type="button" onClick={applyManualImpulse}>
-              Pulse
-            </button>
-            <button type="button" aria-pressed={isGravityEnabled} onClick={() => setIsGravityEnabled((value) => !value)}>
-              Gravity
-            </button>
-            <button type="button" aria-pressed={isSlowMotion} onClick={() => setIsSlowMotion((value) => !value)}>
-              Slow
-            </button>
-            <button type="button" onClick={resetExperiment}>
-              Reset
-            </button>
-          </div>
-          <div className="shake-readout" aria-label="Simulation metrics">
-            <span>
-              <strong>{metrics.impacts}</strong>
-              impacts
-            </span>
-            <span>
-              <strong>{metrics.energy}</strong>
-              energy
-            </span>
-            <span>
-              <strong>{Math.round(metrics.motion)}</strong>
-              motion
-            </span>
-          </div>
+          <p>Grab the actual browser window and shake it. The balls lag behind the moving viewport, collide, and pile up inside the box.</p>
         </div>
 
-        <div className="shake-desktop" ref={desktopRef}>
-          <div className="shake-desktop__frame" ref={frameRef}>
+        <div className="shake-desktop" ref={stageRef}>
+          <div className="shake-desktop__frame" ref={boxRef}>
             <div className="shake-wallpaper" aria-hidden="true" />
-            <div className="shake-frame-label">browser-window motion / restitution 0.82 / drag enabled</div>
-            {WINDOW_CONFIGS.map((body) => (
-              <WindowPanel
-                key={body.id}
-                body={body}
+            {BALL_CONFIGS.map((ball) => (
+              <Ball
+                key={ball.id}
+                ball={ball}
                 nodeRef={(node) => {
-                  bodyRefs.current[body.id] = node
+                  ballRefs.current[ball.id] = node
                 }}
                 onPointerDown={handlePointerDown}
               />

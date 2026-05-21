@@ -4,9 +4,6 @@
   --shake-ink: #111314;
   --shake-paper: #f4efe5;
   --shake-lime: #c8ff4d;
-  --shake-cyan: #5ee7ff;
-  --shake-rose: #ff6f91;
-  --shake-amber: #ffb13d;
   --shake-panel: rgb(247 240 225 / 88%);
   --shake-frame: #171a1d;
   --shake-font-mono: 'IBM Plex Mono', monospace;
@@ -15,8 +12,8 @@
 
 body.route--window-shake {
   background:
-    radial-gradient(circle at 20% 12%, rgb(200 255 77 / 20%), transparent 24rem),
-    radial-gradient(circle at 78% 22%, rgb(94 231 255 / 20%), transparent 22rem),
+    radial-gradient(circle at 20% 12%, rgb(200 255 77 / 18%), transparent 24rem),
+    radial-gradient(circle at 78% 22%, rgb(71 160 196 / 20%), transparent 22rem),
     linear-gradient(135deg, #d8d1c2 0%, #f5eee1 46%, #c7d5d6 100%);
   color: var(--shake-ink);
 }
@@ -96,82 +93,19 @@ body.route--window-shake {
 }
 
 .shake-panel p {
+  max-width: 32rem;
   font-size: 0.84rem;
   line-height: 1.62;
   color: rgb(17 19 20 / 72%);
 }
 
-.shake-controls {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.shake-controls button {
-  min-height: 42px;
-  border: 1px solid rgb(17 19 20 / 16%);
-  border-radius: 6px;
-  background: rgb(255 255 255 / 48%);
-  color: var(--shake-ink);
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  transition:
-    transform 120ms ease,
-    background-color 120ms ease,
-    box-shadow 120ms ease;
-}
-
-.shake-controls button:hover {
-  background: rgb(255 255 255 / 76%);
-  box-shadow: inset 0 -2px 0 rgb(17 19 20 / 16%);
-}
-
-.shake-controls button:active {
-  transform: translateY(2px);
-}
-
-.shake-controls button[aria-pressed='true'] {
-  background: var(--shake-ink);
-  color: var(--shake-lime);
-}
-
-.shake-readout {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.55rem;
-}
-
-.shake-readout span {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.7rem 0.45rem;
-  border: 1px solid rgb(17 19 20 / 12%);
-  border-radius: 6px;
-  background: rgb(17 19 20 / 6%);
-  color: rgb(17 19 20 / 62%);
-  font-size: 0.62rem;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.shake-readout strong {
-  color: var(--shake-ink);
-  font-size: clamp(1.1rem, 3vw, 1.45rem);
-  line-height: 1;
-}
-
 .shake-desktop {
   position: relative;
   width: 100%;
-  aspect-ratio: 980 / 620;
+  aspect-ratio: 780 / 620;
   max-height: calc(100vh - 8rem);
-  border-radius: 10px;
-  transform: rotate(-1.25deg);
+  border-radius: 22px;
+  transform: rotate(-1deg);
 }
 
 .shake-desktop__frame {
@@ -179,215 +113,97 @@ body.route--window-shake {
   inset: 0;
   overflow: hidden;
   border: 18px solid var(--shake-frame);
-  border-radius: 10px;
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 6%) 1px, transparent 1px),
-    linear-gradient(0deg, rgb(255 255 255 / 5%) 1px, transparent 1px),
-    #22272b;
-  background-size: 54px 54px;
+  border-radius: 22px;
+  background: #d9ddd0;
   box-shadow:
-    0 32px 70px rgb(17 19 20 / 32%),
-    inset 0 0 0 1px rgb(255 255 255 / 11%);
+    0 34px 74px rgb(17 19 20 / 32%),
+    inset 0 0 0 1px rgb(255 255 255 / 28%);
+  perspective: 1100px;
   will-change: transform;
 }
 
+.shake-desktop__frame::before,
 .shake-desktop__frame::after {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg, transparent, rgb(255 255 255 / 7%), transparent),
-    radial-gradient(circle at 50% 50%, transparent 52%, rgb(0 0 0 / 34%) 100%);
-  opacity: calc(0.2 + var(--shake-level, 0%) / 220%);
   pointer-events: none;
+}
+
+.shake-desktop__frame::before {
+  background:
+    linear-gradient(90deg, rgb(142 0 0 / 92%) 0 19%, transparent 19%),
+    linear-gradient(270deg, rgb(0 118 17 / 96%) 0 19%, transparent 19%),
+    linear-gradient(180deg, rgb(251 252 241 / 94%) 0 28%, transparent 28%),
+    linear-gradient(0deg, rgb(248 249 238 / 98%) 0 18%, transparent 18%),
+    linear-gradient(135deg, #e8eadf 0%, #b7c1ac 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.shake-desktop__frame::after {
+  z-index: 5;
+  background:
+    radial-gradient(circle at 14% 82%, rgb(255 255 255 / 56%), transparent 12rem),
+    radial-gradient(circle at 50% 8%, rgb(255 255 255 / 38%), transparent 18rem),
+    linear-gradient(90deg, transparent, rgb(255 255 255 / 11%), transparent),
+    radial-gradient(circle at 50% 50%, transparent 54%, rgb(0 0 0 / 30%) 100%);
+  opacity: calc(0.46 + var(--shake-level, 0%) / 260%);
 }
 
 .shake-wallpaper {
   position: absolute;
-  inset: 0;
+  inset: 18px;
+  z-index: 0;
+  border-radius: 5px;
   background:
-    radial-gradient(circle at 16% 20%, rgb(200 255 77 / 24%), transparent 13rem),
-    radial-gradient(circle at 78% 70%, rgb(255 111 145 / 18%), transparent 16rem),
-    linear-gradient(145deg, #1c2024, #313a3f 52%, #141719);
+    linear-gradient(135deg, rgb(120 0 0 / 98%) 0 20%, transparent 20%),
+    linear-gradient(225deg, rgb(0 112 12 / 98%) 0 20%, transparent 20%),
+    linear-gradient(180deg, #f0f1e7 0 29%, transparent 29%),
+    linear-gradient(0deg, #f9faef 0 19%, transparent 19%),
+    linear-gradient(145deg, #dfe4d5, #abb8a4 58%, #e7ebe0);
+  box-shadow:
+    inset 0 0 34px rgb(0 0 0 / 18%),
+    inset 0 -120px 120px rgb(80 94 62 / 28%);
 }
 
-.shake-frame-label {
-  position: absolute;
-  right: 1rem;
-  bottom: 0.85rem;
-  z-index: 1;
-  color: rgb(244 239 229 / 50%);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.shake-window {
+.shake-ball {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 2;
-  width: var(--panel-width);
-  height: var(--panel-height);
-  overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 7px;
-  background: rgb(236 232 219 / 94%);
+  z-index: 3;
+  width: var(--ball-size);
+  height: var(--ball-size);
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 28%, rgb(255 255 255 / 72%) 0 10%, transparent 22%),
+    radial-gradient(circle at 68% 78%, rgb(0 0 0 / 42%) 0 20%, transparent 46%),
+    radial-gradient(circle at 35% 35%, var(--ball-glow), var(--ball-color) 54%, rgb(0 0 0 / 62%) 100%);
   box-shadow:
-    0 20px 36px rgb(0 0 0 / 24%),
-    inset 0 1px 0 rgb(255 255 255 / 56%);
+    0 18px 28px rgb(0 0 0 / 30%),
+    inset -14px -18px 22px rgb(0 0 0 / 28%),
+    inset 8px 8px 14px rgb(255 255 255 / 24%);
   cursor: grab;
+  filter: saturate(1.15) contrast(1.08);
   touch-action: none;
-  user-select: none;
   will-change: transform;
 }
 
-.shake-window:active {
-  cursor: grabbing;
-}
-
-.shake-window--amber {
-  --window-accent: var(--shake-amber);
-}
-
-.shake-window--cyan {
-  --window-accent: var(--shake-cyan);
-}
-
-.shake-window--rose {
-  --window-accent: var(--shake-rose);
-}
-
-.shake-window__bar {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.72rem;
-  align-items: center;
-  min-height: 54px;
-  padding: 0.72rem 0.85rem;
-  border-bottom: 1px solid rgb(17 19 20 / 14%);
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 50%), transparent),
-    color-mix(in srgb, var(--window-accent) 22%, #f2eadc);
-}
-
-.shake-window__lights {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.shake-window__lights span {
-  width: 10px;
-  height: 10px;
-  border: 1px solid rgb(17 19 20 / 18%);
+.shake-ball::after {
+  content: '';
+  position: absolute;
+  top: 16%;
+  left: 18%;
+  width: 32%;
+  height: 22%;
   border-radius: 50%;
-  background: var(--window-accent);
-  box-shadow: inset 0 -1px 0 rgb(17 19 20 / 16%);
+  background: rgb(255 255 255 / 54%);
+  filter: blur(7px);
+  transform: rotate(-26deg);
 }
 
-.shake-window__lights span:nth-child(2) {
-  background: rgb(255 255 255 / 65%);
-}
-
-.shake-window__lights span:nth-child(3) {
-  background: rgb(17 19 20 / 16%);
-}
-
-.shake-window h2 {
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.shake-window p {
-  margin-top: 0.1rem;
-  color: rgb(17 19 20 / 54%);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-}
-
-.shake-window__body {
-  height: calc(100% - 54px);
-  padding: 0.9rem;
-}
-
-.shake-console {
-  display: grid;
-  gap: 0.44rem;
-  color: #253009;
-  font-size: 0.68rem;
-}
-
-.shake-console span {
-  overflow: hidden;
-  padding-bottom: 0.32rem;
-  border-bottom: 1px dashed rgb(17 19 20 / 14%);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shake-scope {
-  display: flex;
-  align-items: end;
-  gap: 4px;
-  height: 100%;
-  padding: 0.5rem;
-  border-radius: 5px;
-  background:
-    linear-gradient(90deg, rgb(17 19 20 / 8%) 1px, transparent 1px),
-    linear-gradient(0deg, rgb(17 19 20 / 8%) 1px, transparent 1px),
-    rgb(17 19 20 / 5%);
-  background-size: 20px 20px;
-}
-
-.shake-scope span {
-  flex: 1;
-  height: var(--bar-height);
-  min-width: 3px;
-  border-radius: 2px 2px 0 0;
-  background: linear-gradient(180deg, var(--shake-cyan), rgb(17 19 20 / 34%));
-  animation: shake-scope-pulse 900ms ease-in-out infinite alternate;
-}
-
-.shake-scope span:nth-child(3n) {
-  animation-delay: -240ms;
-}
-
-.shake-scope span:nth-child(4n) {
-  animation-delay: -460ms;
-}
-
-.shake-note {
-  display: grid;
-  align-content: center;
-  height: 100%;
-  gap: 0.55rem;
-  color: #2a1118;
-}
-
-.shake-note span {
-  font-size: 0.64rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
-.shake-note strong {
-  font-family: var(--shake-font-display);
-  font-size: 2.05rem;
-  font-weight: 400;
-  line-height: 0.95;
-}
-
-@keyframes shake-scope-pulse {
-  from {
-    transform: scaleY(0.7);
-  }
-
-  to {
-    transform: scaleY(1.08);
-  }
+.shake-ball:active {
+  cursor: grabbing;
 }
 
 @media (max-width: 980px) {
@@ -401,19 +217,7 @@ body.route--window-shake {
   }
 
   .shake-panel {
-    grid-template-columns: 1fr 1fr;
-    align-items: end;
-  }
-
-  .shake-kicker,
-  .shake-panel h1,
-  .shake-panel p {
-    grid-column: 1;
-  }
-
-  .shake-controls,
-  .shake-readout {
-    grid-column: 2;
+    min-height: 0;
   }
 
   .shake-panel h1 {
@@ -430,19 +234,7 @@ body.route--window-shake {
     padding-inline: 0.75rem;
   }
 
-  .shake-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .shake-kicker,
-  .shake-panel h1,
-  .shake-panel p,
-  .shake-controls,
-  .shake-readout {
-    grid-column: 1;
-  }
-
-  .shake-window {
-    max-width: calc(100% - 36px);
+  .shake-panel h1 {
+    font-size: clamp(3rem, 18vw, 5rem);
   }
 }
