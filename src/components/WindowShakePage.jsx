@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './window-shake.css'
 
 const FRAME_THICKNESS = 18
+const WINDOW_MOTION_GAIN = 36
+const WINDOW_MOTION_THRESHOLD = 0.65
 const WINDOW_CONFIGS = [
   {
     id: 'console',
@@ -43,7 +45,7 @@ const WINDOW_CONFIGS = [
 const INITIAL_METRICS = {
   impacts: 0,
   energy: 32,
-  shake: 0,
+  motion: 0,
 }
 
 function clamp(value, min, max) {
@@ -77,6 +79,13 @@ function getSimulationBounds(desktop) {
   }
 }
 
+function getBrowserWindowPosition() {
+  return {
+    x: window.screenX ?? window.screenLeft ?? 0,
+    y: window.screenY ?? window.screenTop ?? 0,
+  }
+}
+
 function WindowPanel({ body, nodeRef, onPointerDown }) {
   return (
     <article
@@ -102,9 +111,9 @@ function WindowPanel({ body, nodeRef, onPointerDown }) {
       <div className="shake-window__body">
         {body.id === 'console' ? (
           <div className="shake-console" aria-hidden="true">
-            <span>rigid.body.applyImpulse(vec2.random())</span>
+            <span>window.screenX/Y to inertial impulse</span>
             <span>viewport.restitution = 0.82</span>
-            <span>shake.decay *= deltaTime</span>
+            <span>motion.decay *= deltaTime</span>
             <span>status: delightfully unstable</span>
           </div>
         ) : null}
@@ -118,7 +127,7 @@ function WindowPanel({ body, nodeRef, onPointerDown }) {
         {body.id === 'memo' ? (
           <div className="shake-note">
             <span>Impact budget</span>
-            <strong>Shake until the desktop answers back.</strong>
+            <strong>Shake the browser window until the desktop answers back.</strong>
           </div>
         ) : null}
       </div>
@@ -133,6 +142,7 @@ export default function WindowShakePage() {
   const bodiesRef = useRef(WINDOW_CONFIGS.map(makeBody))
   const dragRef = useRef(null)
   const lastTimeRef = useRef(0)
+  const windowPositionRef = useRef(null)
   const metricsRef = useRef(INITIAL_METRICS)
   const [metrics, setMetrics] = useState(INITIAL_METRICS)
   const [isGravityEnabled, setIsGravityEnabled] = useState(true)
@@ -146,21 +156,26 @@ export default function WindowShakePage() {
     window.scrollTo({ top: 0, left: 0 })
   }, [])
 
-  const applyShake = useCallback((strength = 22) => {
-    metricsRef.current.shake = Math.min(100, metricsRef.current.shake + strength)
+  const applyWindowImpulse = useCallback((deltaX, deltaY, strength) => {
+    metricsRef.current.motion = Math.min(100, metricsRef.current.motion + strength)
     bodiesRef.current.forEach((body, index) => {
       const direction = index % 2 === 0 ? 1 : -1
-      body.vx += direction * (160 + strength * 5)
-      body.vy -= 90 + strength * 3
-      body.spin += direction * (58 + strength)
+      body.vx -= deltaX * WINDOW_MOTION_GAIN
+      body.vy -= deltaY * WINDOW_MOTION_GAIN
+      body.spin += direction * strength * 18 + deltaX * 6
     })
     syncMetrics()
   }, [syncMetrics])
+
+  const applyManualImpulse = useCallback(() => {
+    applyWindowImpulse(6, -3, 30)
+  }, [applyWindowImpulse])
 
   const resetExperiment = useCallback(() => {
     bodiesRef.current = WINDOW_CONFIGS.map(makeBody)
     dragRef.current = null
     metricsRef.current = INITIAL_METRICS
+    windowPositionRef.current = getBrowserWindowPosition()
     syncMetrics()
   }, [syncMetrics])
 
@@ -205,7 +220,7 @@ export default function WindowShakePage() {
       body.spin = body.vx * 0.04
       drag.lastX = nextX
       drag.lastY = nextY
-      metricsRef.current.shake = Math.min(100, metricsRef.current.shake + 0.8)
+      metricsRef.current.motion = Math.min(100, metricsRef.current.motion + 0.8)
     }
 
     const onPointerUp = () => {
@@ -234,7 +249,21 @@ export default function WindowShakePage() {
       const gravity = isGravityEnabled ? 360 : 0
       const bodies = bodiesRef.current
       const bounds = getSimulationBounds(desktopRef.current)
+      const currentWindowPosition = getBrowserWindowPosition()
       let impactThisFrame = false
+
+      if (!windowPositionRef.current) {
+        windowPositionRef.current = currentWindowPosition
+      }
+
+      const windowDeltaX = currentWindowPosition.x - windowPositionRef.current.x
+      const windowDeltaY = currentWindowPosition.y - windowPositionRef.current.y
+      const windowMotion = Math.hypot(windowDeltaX, windowDeltaY)
+      windowPositionRef.current = currentWindowPosition
+
+      if (windowMotion > WINDOW_MOTION_THRESHOLD) {
+        applyWindowImpulse(windowDeltaX, windowDeltaY, Math.min(48, windowMotion * 1.4))
+      }
 
       bodies.forEach((body) => {
         const isDragging = dragRef.current?.id === body.id
@@ -303,10 +332,10 @@ export default function WindowShakePage() {
 
       if (impactThisFrame) {
         metricsRef.current.impacts += 1
-        metricsRef.current.shake = Math.min(100, metricsRef.current.shake + 7)
+        metricsRef.current.motion = Math.min(100, metricsRef.current.motion + 7)
       }
 
-      metricsRef.current.shake *= 0.94
+      metricsRef.current.motion *= 0.94
       metricsRef.current.energy = Math.round(
         bodies.reduce((total, body) => total + Math.abs(body.vx) + Math.abs(body.vy), 0) / 16,
       )
@@ -319,7 +348,7 @@ export default function WindowShakePage() {
       })
 
       if (frameRef.current) {
-        const shake = metricsRef.current.shake
+        const shake = metricsRef.current.motion
         const wobbleX = Math.sin(time * 0.032) * shake * 0.09
         const wobbleY = Math.cos(time * 0.041) * shake * 0.06
         frameRef.current.style.transform = `translate3d(${wobbleX}px, ${wobbleY}px, 0)`
@@ -336,7 +365,7 @@ export default function WindowShakePage() {
       window.cancelAnimationFrame(frameId)
       lastTimeRef.current = 0
     }
-  }, [isGravityEnabled, isSlowMotion, syncMetrics])
+  }, [applyWindowImpulse, isGravityEnabled, isSlowMotion, syncMetrics])
 
   return (
     <main className="window-shake-page">
@@ -345,11 +374,11 @@ export default function WindowShakePage() {
           <div className="shake-kicker">Experiment 05</div>
           <h1>Physics Engine Window Shake</h1>
           <p>
-            Desktop panels behave like small rigid bodies: drag one, let it collide, or punch the system with an impulse and watch the chrome rattle.
+            Grab the actual browser window and shake it. The panels lag behind the moving viewport, collide, and rattle against the frame.
           </p>
           <div className="shake-controls" aria-label="Experiment controls">
-            <button type="button" onClick={() => applyShake(30)}>
-              Shake
+            <button type="button" onClick={applyManualImpulse}>
+              Pulse
             </button>
             <button type="button" aria-pressed={isGravityEnabled} onClick={() => setIsGravityEnabled((value) => !value)}>
               Gravity
@@ -371,8 +400,8 @@ export default function WindowShakePage() {
               energy
             </span>
             <span>
-              <strong>{Math.round(metrics.shake)}</strong>
-              shake
+              <strong>{Math.round(metrics.motion)}</strong>
+              motion
             </span>
           </div>
         </div>
@@ -380,7 +409,7 @@ export default function WindowShakePage() {
         <div className="shake-desktop" ref={desktopRef}>
           <div className="shake-desktop__frame" ref={frameRef}>
             <div className="shake-wallpaper" aria-hidden="true" />
-            <div className="shake-frame-label">bounded viewport / restitution 0.82 / drag enabled</div>
+            <div className="shake-frame-label">browser-window motion / restitution 0.82 / drag enabled</div>
             {WINDOW_CONFIGS.map((body) => (
               <WindowPanel
                 key={body.id}
