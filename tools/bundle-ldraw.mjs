@@ -34,6 +34,11 @@ while (queue.length) {
   const output = path.join(destination, name)
   fs.mkdirSync(path.dirname(output), { recursive: true })
   if (name === '42081-1.mpd') fs.copyFileSync(sourcePath, output)
-  else if (!embedded.has(name)) fs.copyFileSync(sourcePath, output)
+  else if (!embedded.has(name)) {
+    fs.copyFileSync(sourcePath, output)
+    const primitiveOutput = path.join(destination, 'p', name)
+    fs.mkdirSync(path.dirname(primitiveOutput), { recursive: true })
+    fs.copyFileSync(sourcePath, primitiveOutput)
+  }
 }
 console.log(`Bundled ${seen.size} LDraw files`)
