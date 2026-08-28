@@ -30,6 +30,8 @@ function index(dir) {
   }
 }
 index(source)
+fs.mkdirSync(destination, { recursive: true })
+fs.copyFileSync(path.join(source, 'LDConfig.ldr'), path.join(destination, 'LDConfig.ldr'))
 const queue = ['42081-1.mpd']
 const seen = new Set()
 const missing = []

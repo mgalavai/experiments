@@ -66,7 +66,7 @@ function Scene({ lightsOn, onReady, onError }) {
     loader.setConditionalLineMaterial(LDrawConditionalLineMaterial)
     loader.setPath('/')
     loader.setPartsLibraryPath('/ldraw/')
-    loader.load('42081-1.mpd', (object) => {
+    const loadModel = () => loader.load('42081-1.mpd', (object) => {
       model = object
       model.rotation.x = Math.PI
       model.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true } })
@@ -80,6 +80,7 @@ function Scene({ lightsOn, onReady, onError }) {
       scene.add(model)
       onReady()
     }, undefined, onError)
+    loader.preloadMaterials('ldraw/LDConfig.ldr').then(loadModel).catch(onError)
 
     const resize = () => { const { clientWidth: w, clientHeight: h } = root; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false) }
     resize(); window.addEventListener('resize', resize)
