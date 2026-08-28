@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js'
+import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js'
 import './field-test.css'
 
 function Scene({ lightsOn, onReady, onError }) {
@@ -18,7 +19,7 @@ function Scene({ lightsOn, onReady, onError }) {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.shadowMap.type = THREE.PCFShadowMap
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.12
     root.appendChild(renderer.domElement)
@@ -62,6 +63,7 @@ function Scene({ lightsOn, onReady, onError }) {
 
     let model
     const loader = new LDrawLoader()
+    loader.setConditionalLineMaterial(LDrawConditionalLineMaterial)
     loader.setPath('/')
     loader.setPartsLibraryPath('https://library.ldraw.org/library/official/')
     loader.load('42081-1.mpd', (object) => {
