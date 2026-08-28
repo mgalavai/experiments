@@ -1,0 +1,22 @@
+.field-test-page { min-height: 100vh; height: 100vh; position: relative; overflow: hidden; background:#10100e; color:#f5efe5; font-family:'Raleway',sans-serif; }
+.field-test-canvas { position:absolute; inset:0; z-index:0; }
+.field-test-canvas canvas { display:block; width:100%; height:100%; }
+.field-test-vignette { position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(circle at 52% 50%, transparent 30%, rgba(5,5,4,.25) 72%, rgba(5,5,4,.88) 100%), linear-gradient(90deg,rgba(5,5,4,.62),transparent 42%,rgba(5,5,4,.3)); }
+.field-test-header,.field-test-panel,.field-test-meta,.field-test-hint { position:absolute; z-index:2; }
+.field-test-header { top:12vh; left:7vw; max-width:390px; }
+.eyebrow { color:#d7a665; font-size:10px; letter-spacing:.2em; font-weight:600; }
+.field-test-header h1 { margin:20px 0 18px; font:500 clamp(3.7rem,7vw,7.6rem)/.82 'Lora',serif; letter-spacing:-.07em; }
+.field-test-header h1 em { color:#d7a665; font-style:italic; }
+.dek { max-width:260px; color:#c9c1b3; font-size:13px; line-height:1.65; }
+.field-test-panel { right:6vw; bottom:10vh; width:230px; padding:20px 0 0; border-top:1px solid rgba(215,166,101,.55); }
+.field-test-panel h2 { margin:14px 0 26px; font:400 25px/1.05 'Lora',serif; }
+.field-test-panel dl { border-top:1px solid rgba(255,255,255,.12); }
+.field-test-panel dl div { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.12); }
+dt,dd { font-size:9px; letter-spacing:.12em; } dt { color:#958d81; } dd { color:#e8dcca; }
+.field-test-actions { display:flex; gap:8px; margin-top:18px; }
+.field-test-actions button { cursor:pointer; padding:8px 10px; border:1px solid rgba(215,166,101,.4); color:#e8dcca; font-size:10px; background:rgba(255,255,255,.04); }
+.field-test-actions button:hover { background:rgba(215,166,101,.18); }
+.field-test-meta { top:5rem; left:7vw; right:6vw; display:flex; gap:24px; color:#a59d91; font-size:9px; letter-spacing:.18em; }
+.field-test-meta span:first-child { color:#d7a665; }.status { margin-left:auto; }.status i { display:inline-block; width:6px; height:6px; margin-right:8px; border-radius:50%; background:#d7a665; box-shadow:0 0 12px #d7a665; }
+.field-test-hint { left:7vw; bottom:5vh; color:#8e877c; font-size:9px; letter-spacing:.16em; }
+@media (max-width:700px) { .field-test-header { top:14vh; left:7vw; }.field-test-header h1 { font-size:3.9rem; }.field-test-panel { right:7vw; bottom:8vh; width:200px; }.field-test-meta { top:4.5rem; font-size:8px; }.field-test-meta span:nth-child(2) { display:none; } }

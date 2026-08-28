@@ -6,6 +6,7 @@ import FridayPlannerPage from './components/FridayPlannerPage'
 import ObjectivesTelemetryPage from './components/ObjectivesTelemetryPage'
 import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 import LogoPage from './components/LogoPage'
+import FieldTestPage from './components/FieldTestPage'
 
 const views = [
   {
@@ -32,6 +33,11 @@ const views = [
     path: '/logo',
     label: 'Logo',
     element: <LogoPage />,
+  },
+  {
+    path: '/field-test',
+    label: 'Field Test',
+    element: <FieldTestPage />,
   },
 ]
 
