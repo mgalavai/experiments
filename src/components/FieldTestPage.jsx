@@ -73,10 +73,13 @@ function Scene({ lightsOn, onReady, onError }) {
       const box = new THREE.Box3().setFromObject(model)
       const center = box.getCenter(new THREE.Vector3())
       const size = box.getSize(new THREE.Vector3())
-      model.position.sub(center)
-      model.position.y += size.y / 2
       const scale = 4.4 / Math.max(size.x, size.y, size.z)
       model.scale.setScalar(scale)
+      model.position.set(
+        -center.x * scale,
+        -box.min.y * scale,
+        -center.z * scale,
+      )
       scene.add(model)
       onReady()
     }, undefined, onError)
