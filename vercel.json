@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/ldraw/:path*",
-      "destination": "https://library.ldraw.org/library/official/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
