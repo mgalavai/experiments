@@ -55,7 +55,7 @@ while (queue.length) {
   }
   const output = path.join(destination, name)
   fs.mkdirSync(path.dirname(output), { recursive: true })
-  if (name === '42081-1.mpd') fs.copyFileSync(sourcePath, output)
+  if (name === '42081-1.mpd') fs.writeFileSync(output, mpdText.replaceAll('s\\', 'parts/s/'))
   else if (!embedded.has(name)) {
     fs.copyFileSync(sourcePath, output)
     const canonicalOutput = path.join(destination, 'parts', name)

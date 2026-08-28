@@ -66,7 +66,7 @@ function Scene({ lightsOn, onReady, onError }) {
     loader.setConditionalLineMaterial(LDrawConditionalLineMaterial)
     loader.setPath('/')
     loader.setPartsLibraryPath('/ldraw/')
-    const loadModel = () => loader.load('42081-1.mpd', (object) => {
+    const loadModel = () => loader.load('ldraw/42081-1.mpd', (object) => {
       model = object
       model.rotation.x = Math.PI
       model.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true } })
