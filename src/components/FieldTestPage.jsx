@@ -65,7 +65,7 @@ function Scene({ lightsOn, onReady, onError }) {
     const loader = new LDrawLoader()
     loader.setConditionalLineMaterial(LDrawConditionalLineMaterial)
     loader.setPath('/')
-    loader.setPartsLibraryPath('https://library.ldraw.org/library/official/')
+    loader.setPartsLibraryPath('/ldraw/')
     loader.load('42081-1.mpd', (object) => {
       model = object
       model.rotation.x = Math.PI
