@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js'
-import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import './field-test.css'
 
-function Scene({ lightsOn, onReady, onError }) {
+function Scene({ lightsOn, exploded, resetVersion, onReady, onError }) {
   const mount = useRef(null)
   const lights = useRef(null)
+  const renderScene = useRef(null)
+  const view = useRef(null)
+  const explosion = useRef(null)
 
   useEffect(() => {
     const root = mount.current
@@ -17,7 +20,7 @@ function Scene({ lightsOn, onReady, onError }) {
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100)
     camera.position.set(7.6, 4.2, 8.5)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFShadowMap
     renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -26,8 +29,7 @@ function Scene({ lightsOn, onReady, onError }) {
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.target.set(0, 1.2, 0)
-    controls.enableDamping = true
-    controls.dampingFactor = 0.06
+    controls.enableDamping = false
     controls.minDistance = 5
     controls.maxDistance = 15
     controls.maxPolarAngle = Math.PI / 2.05
@@ -37,7 +39,7 @@ function Scene({ lightsOn, onReady, onError }) {
     const key = new THREE.DirectionalLight('#ffd59a', 4.6)
     key.position.set(-5, 9, 5)
     key.castShadow = true
-    key.shadow.mapSize.set(2048, 2048)
+    key.shadow.mapSize.set(1024, 1024)
     key.shadow.camera.left = -7; key.shadow.camera.right = 7; key.shadow.camera.top = 7; key.shadow.camera.bottom = -7
     scene.add(key)
     const rim = new THREE.DirectionalLight('#77a9c9', 5)
@@ -61,52 +63,110 @@ function Scene({ lightsOn, onReady, onError }) {
     dust.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     scene.add(new THREE.Points(dust, new THREE.PointsMaterial({ color: '#d9bd8e', size: 0.025, transparent: true, opacity: 0.32 })))
 
+    const render = () => renderer.render(scene, camera)
+    renderScene.current = render
+    view.current = { camera, controls, render }
+    controls.addEventListener('change', render)
+
     let model
-    const loader = new LDrawLoader()
-    loader.setConditionalLineMaterial(LDrawConditionalLineMaterial)
-    loader.setPath('/')
-    loader.setPartsLibraryPath('/ldraw/')
-    const loadModel = () => loader.load('ldraw/42081-1.mpd', (object) => {
-      model = object
-      model.rotation.x = Math.PI
+    let animationFrame = 0
+    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+    loader.load('/42081-1.glb', (gltf) => {
+      model = gltf.scene
       model.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true } })
-      const box = new THREE.Box3().setFromObject(model)
-      const center = box.getCenter(new THREE.Vector3())
-      const size = box.getSize(new THREE.Vector3())
-      const scale = 4.4 / Math.max(size.x, size.y, size.z)
-      model.scale.setScalar(scale)
-      model.position.set(
-        -center.x * scale,
-        -box.min.y * scale,
-        -center.z * scale,
-      )
       scene.add(model)
+      model.updateMatrixWorld(true)
+      const modelCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
+      const parts = []
+      model.traverse((child) => {
+        if (!child.isMesh || !child.parent) return
+        child.geometry.computeBoundingBox()
+        const partCenter = child.geometry.boundingBox.getCenter(new THREE.Vector3()).applyMatrix4(child.matrixWorld)
+        const direction = partCenter.sub(modelCenter)
+        direction.y += Math.max(0.25, direction.length() * 0.14)
+        direction.normalize()
+        const worldOrigin = child.getWorldPosition(new THREE.Vector3())
+        const target = child.parent.worldToLocal(worldOrigin.addScaledVector(direction, 1.35))
+        parts.push({ mesh: child, origin: child.position.clone(), target })
+      })
+      explosion.current = { parts, renderer, render, getFrame: () => animationFrame, setFrame: (frame) => { animationFrame = frame } }
+      render()
+      renderer.shadowMap.autoUpdate = false
       onReady()
     }, undefined, onError)
-    loader.preloadMaterials('ldraw/LDConfig.ldr').then(loadModel).catch(onError)
 
-    const resize = () => { const { clientWidth: w, clientHeight: h } = root; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false) }
+    const resize = () => { const { clientWidth: w, clientHeight: h } = root; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); render() }
     resize(); window.addEventListener('resize', resize)
-    let frame = 0
-    const animate = () => { frame = requestAnimationFrame(animate); if (model) model.rotation.y += 0.0015; controls.update(); renderer.render(scene, camera) }
-    animate()
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', resize); controls.dispose(); renderer.dispose(); root.removeChild(renderer.domElement) }
+    return () => {
+      window.removeEventListener('resize', resize)
+      controls.removeEventListener('change', render)
+      controls.dispose()
+      cancelAnimationFrame(animationFrame)
+      scene.traverse((child) => {
+        child.geometry?.dispose()
+        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
+        else child.material?.dispose()
+      })
+      renderer.dispose()
+      renderScene.current = null
+      view.current = null
+      explosion.current = null
+      root.removeChild(renderer.domElement)
+    }
   }, [onReady, onError])
 
-  useEffect(() => { if (lights.current) Object.values(lights.current).forEach((light) => { light.intensity = lightsOn ? (light === lights.current.ambient ? 1.1 : light === lights.current.key ? 4.6 : 5) : 0.15 }) }, [lightsOn])
+  useEffect(() => {
+    if (!lights.current) return
+    Object.values(lights.current).forEach((light) => { light.intensity = lightsOn ? (light === lights.current.ambient ? 1.1 : light === lights.current.key ? 4.6 : 5) : 0.15 })
+    renderScene.current?.()
+  }, [lightsOn])
+
+  useEffect(() => {
+    const state = explosion.current
+    if (!state) return
+    cancelAnimationFrame(state.getFrame())
+    const start = performance.now()
+    const starts = state.parts.map(({ mesh }) => mesh.position.clone())
+    const duration = 620
+    const animateExplosion = (now) => {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      state.parts.forEach((part, index) => part.mesh.position.lerpVectors(starts[index], exploded ? part.target : part.origin, eased))
+      state.render()
+      if (progress < 1) state.setFrame(requestAnimationFrame(animateExplosion))
+      else {
+        state.renderer.shadowMap.needsUpdate = true
+        state.render()
+      }
+    }
+    state.setFrame(requestAnimationFrame(animateExplosion))
+    return () => cancelAnimationFrame(state.getFrame())
+  }, [exploded])
+
+  useEffect(() => {
+    if (!view.current || resetVersion === 0) return
+    view.current.camera.position.set(7.6, 4.2, 8.5)
+    view.current.controls.target.set(0, 1.2, 0)
+    view.current.controls.update()
+    view.current.render()
+  }, [resetVersion])
+
   return <div className="field-test-canvas" ref={mount} />
 }
 
 export default function FieldTestPage() {
   const [lightsOn, setLightsOn] = useState(true)
-  const [status, setStatus] = useState('PARSING MODEL')
-  const [resetKey, setResetKey] = useState(0)
+  const [exploded, setExploded] = useState(false)
+  const [status, setStatus] = useState('LOADING MODEL')
+  const [resetVersion, setResetVersion] = useState(0)
+  const handleReady = useCallback(() => setStatus('LIVE / READY'), [])
+  const handleError = useCallback(() => setStatus('MODEL LOAD ERROR'), [])
   return <main className="field-test-page">
-    <Scene key={resetKey} lightsOn={lightsOn} onReady={() => setStatus('LIVE / READY')} onError={() => setStatus('MODEL LOAD ERROR')} />
+    <Scene lightsOn={lightsOn} exploded={exploded} resetVersion={resetVersion} onReady={handleReady} onError={handleError} />
     <div className="field-test-vignette" />
     <header className="field-test-header"><p className="eyebrow">VOLVO CE / DIGITAL LAB</p><h1>Night shift<br /><em>field test</em></h1><p className="dek">A working study of 42081 — framed in light, shadow, and motion.</p></header>
     <div className="field-test-meta"><span>01</span><span>CONSTRUCTION / 2019</span><span className="status"><i />{status}</span></div>
-    <aside className="field-test-panel"><p className="eyebrow">MODEL / 42081-1</p><h2>Rough terrain<br />loader</h2><dl><div><dt>SCENE</dt><dd>01 / 03</dd></div><div><dt>MATERIAL</dt><dd>PHYSICAL / PBR</dd></div><div><dt>LIGHTING</dt><dd>{lightsOn ? 'NIGHT SHIFT' : 'LOW POWER'}</dd></div></dl><div className="field-test-actions"><button onClick={() => setLightsOn((value) => !value)}>{lightsOn ? 'Dim lights' : 'Bring up lights'}</button><button onClick={() => { setResetKey((value) => value + 1); setStatus('PARSING MODEL') }}>Reset view</button></div></aside>
+    <aside className="field-test-panel"><p className="eyebrow">MODEL / 42081-1</p><h2>Rough terrain<br />loader</h2><dl><div><dt>SCENE</dt><dd>01 / 03</dd></div><div><dt>MATERIAL</dt><dd>PHYSICAL / PBR</dd></div><div><dt>LIGHTING</dt><dd>{lightsOn ? 'NIGHT SHIFT' : 'LOW POWER'}</dd></div></dl><div className="field-test-actions"><button onClick={() => setExploded((value) => !value)}>{exploded ? 'Assemble' : 'Explode'}</button><button onClick={() => setLightsOn((value) => !value)}>{lightsOn ? 'Dim lights' : 'Bring up lights'}</button><button onClick={() => setResetVersion((value) => value + 1)}>Reset view</button></div></aside>
     <p className="field-test-hint">DRAG TO ORBIT &nbsp;·&nbsp; SCROLL TO ZOOM</p>
   </main>
 }
