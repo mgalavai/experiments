@@ -86,12 +86,18 @@ function Scene({ lightsOn, exploded, resetVersion, onReady, onError }) {
           if (ancestor.userData.type === 'Part' || ancestor.userData.type === 'Unofficial_Part') return
           ancestor = ancestor.parent
         }
-        const partCenter = new THREE.Box3().setFromObject(child).getCenter(new THREE.Vector3())
+        const partBounds = new THREE.Box3().setFromObject(child)
+        const partCenter = partBounds.getCenter(new THREE.Vector3())
         const direction = partCenter.sub(modelCenter)
         direction.y += Math.max(0.25, direction.length() * 0.14)
         direction.normalize()
+        const offset = direction.multiplyScalar(1.35)
+        const minimumExplodedY = floor.position.y + 0.04
+        if (partBounds.min.y + offset.y < minimumExplodedY) {
+          offset.y += minimumExplodedY - (partBounds.min.y + offset.y)
+        }
         const worldOrigin = child.getWorldPosition(new THREE.Vector3())
-        const target = child.parent.worldToLocal(worldOrigin.addScaledVector(direction, 1.35))
+        const target = child.parent.worldToLocal(worldOrigin.add(offset))
         parts.push({ node: child, origin: child.position.clone(), target })
       })
       explosion.current = { parts, renderer, render, getFrame: () => animationFrame, setFrame: (frame) => { animationFrame = frame } }

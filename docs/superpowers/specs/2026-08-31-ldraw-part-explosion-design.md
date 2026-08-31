@@ -10,6 +10,8 @@ Use the LDraw metadata already preserved in the GLB hierarchy. A movable unit is
 
 For each movable part, calculate one explosion direction from the bounding box of the complete node. Store the node's original local position and its exploded local position. Animate the node transform so every descendant mesh, material primitive, and geometric subpart moves together.
 
+Calculate the target in world space and compare the translated part bounding box with the scene floor. If the target would place any geometry below the floor, raise that target to leave a small visible clearance. This correction changes only the vertical component for affected low parts and preserves the radial movement of all other parts.
+
 If physical-part nodes are nested, select the outer physical-part node and exclude its physical-part descendants from the animation. This prevents double translation. Shortcut nodes remain containers, allowing their physical child parts, such as a tire and rim, to separate independently.
 
 ## Runtime behavior
@@ -18,7 +20,8 @@ If physical-part nodes are nested, select the outer physical-part node and exclu
 - `Assemble` restores the exact original local transforms.
 - Orbiting, lighting, reset behavior, compressed loading, and idle render-on-demand remain unchanged.
 - Shadows update after each transition rather than during every animation frame.
+- No exploded part may intersect or pass below the scene floor.
 
 ## Verification
 
-Build and lint must pass. Visual testing must check an exploded wheel at close range, confirm tire tread and material sections remain attached, confirm tire and rim can separate as complete parts, and confirm `Assemble` restores the intact model.
+Build and lint must pass. Visual testing must check an exploded wheel at close range, confirm tire tread and material sections remain attached, confirm tire and rim can separate as complete parts, confirm the lowest parts remain above the floor, and confirm `Assemble` restores the intact model.
