@@ -79,15 +79,20 @@ function Scene({ lightsOn, exploded, resetVersion, onReady, onError }) {
       const modelCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
       const parts = []
       model.traverse((child) => {
-        if (!child.isMesh || !child.parent) return
-        child.geometry.computeBoundingBox()
-        const partCenter = child.geometry.boundingBox.getCenter(new THREE.Vector3()).applyMatrix4(child.matrixWorld)
+        const isPhysicalPart = child.userData.type === 'Part' || child.userData.type === 'Unofficial_Part'
+        if (!isPhysicalPart || !child.parent) return
+        let ancestor = child.parent
+        while (ancestor && ancestor !== model) {
+          if (ancestor.userData.type === 'Part' || ancestor.userData.type === 'Unofficial_Part') return
+          ancestor = ancestor.parent
+        }
+        const partCenter = new THREE.Box3().setFromObject(child).getCenter(new THREE.Vector3())
         const direction = partCenter.sub(modelCenter)
         direction.y += Math.max(0.25, direction.length() * 0.14)
         direction.normalize()
         const worldOrigin = child.getWorldPosition(new THREE.Vector3())
         const target = child.parent.worldToLocal(worldOrigin.addScaledVector(direction, 1.35))
-        parts.push({ mesh: child, origin: child.position.clone(), target })
+        parts.push({ node: child, origin: child.position.clone(), target })
       })
       explosion.current = { parts, renderer, render, getFrame: () => animationFrame, setFrame: (frame) => { animationFrame = frame } }
       render()
@@ -126,12 +131,12 @@ function Scene({ lightsOn, exploded, resetVersion, onReady, onError }) {
     if (!state) return
     cancelAnimationFrame(state.getFrame())
     const start = performance.now()
-    const starts = state.parts.map(({ mesh }) => mesh.position.clone())
+    const starts = state.parts.map(({ node }) => node.position.clone())
     const duration = 620
     const animateExplosion = (now) => {
       const progress = Math.min((now - start) / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      state.parts.forEach((part, index) => part.mesh.position.lerpVectors(starts[index], exploded ? part.target : part.origin, eased))
+      state.parts.forEach((part, index) => part.node.position.lerpVectors(starts[index], exploded ? part.target : part.origin, eased))
       state.render()
       if (progress < 1) state.setFrame(requestAnimationFrame(animateExplosion))
       else {
