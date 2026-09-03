@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-labelledby="title desc">
+  <title id="title">Early loader archive sketch</title>
+  <desc id="desc">A sepia technical sketch of an articulated wheel loader.</desc>
+  <defs><filter id="n"><feTurbulence baseFrequency=".55" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .12 0"/></filter></defs>
+  <rect width="1000" height="700" fill="#e8d7b6"/><rect width="1000" height="700" filter="url(#n)" opacity=".55"/>
+  <g fill="none" stroke="#443a2e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="304" cy="506" r="106"/><circle cx="304" cy="506" r="54"/><circle cx="694" cy="506" r="106"/><circle cx="694" cy="506" r="54"/>
+    <path d="M226 438l38-126h225l92 58h153l60 136H202m274-194 8-118h180l70 176M489 312l18 150m-41-30h119m149-62 91-58 52 37-83 157M263 312l-78-48m-19-13 19 13"/>
+    <path d="M524 216h115v92H516z" stroke-width="5"/>
+  </g>
+  <g fill="#443a2e" font-family="monospace"><text x="64" y="80" font-size="24">IRONWOOD / CONCEPT 01</text><text x="64" y="116" font-size="17">ARTICULATED FRAME · 1954</text><text x="756" y="650" font-size="16">SCALE 1:20</text></g>
+</svg>

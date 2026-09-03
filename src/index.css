@@ -3,6 +3,7 @@
 @import './components/objectives-telemetry.css';
 @import './components/tedmx.css';
 @import './components/logo.css';
+@import './components/lifeline.css';
 
 :root {
   --paper-main: #fdfbf9;
@@ -115,6 +116,10 @@ button {
   box-shadow: 0 12px 24px rgb(0 0 0 / 6%);
 }
 
+.app-nav--lifeline {
+  display: none;
+}
+
 .app-nav a {
   flex: 0 0 auto;
   font-family: var(--font-sans);
@@ -138,6 +143,18 @@ button {
 .app-nav--digital-key a {
   font-family: 'DM Sans', sans-serif;
   color: var(--color-ink);
+}
+
+.app-nav--lifeline a {
+  color: #d8d6cc;
+  font-family: 'Arial Narrow', sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.app-nav--lifeline a:hover,
+.app-nav--lifeline a[aria-current='page'] {
+  color: #0b0c0b;
+  background: #ffd51f;
 }
 
 .app-nav a:hover {

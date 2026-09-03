@@ -7,6 +7,7 @@ import ObjectivesTelemetryPage from './components/ObjectivesTelemetryPage'
 import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 import LogoPage from './components/LogoPage'
 import FieldTestPage from './components/FieldTestPage'
+import LifelinePage from './components/LifelinePage'
 
 const views = [
   {
@@ -39,6 +40,11 @@ const views = [
     label: 'Field Test',
     element: <FieldTestPage />,
   },
+  {
+    path: '/lifeline',
+    label: 'Lifeline',
+    element: <LifelinePage />,
+  },
 ]
 
 function TopNav() {
@@ -47,10 +53,11 @@ function TopNav() {
   const isDigitalKeyRoute = location.pathname === '/digital-key'
   const isPlannerRoute = location.pathname === '/friday-planner'
   const isLogoRoute = location.pathname === '/logo'
+  const isLifelineRoute = location.pathname === '/lifeline'
 
   return (
     <nav
-      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''}`}
+      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isLifelineRoute ? 'app-nav--lifeline' : ''}`}
       aria-label="Views"
     >
       {views.map((view) => (
