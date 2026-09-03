@@ -10,15 +10,17 @@ The upstream registry targets Next.js App Router and Tailwind CSS. This project 
 
 ## Page design
 
-The timeline tells the fictional life of "Project Ironwood," a wheel loader program spanning 1954 to 2026. Desktop uses a full-height horizontal rail controlled by the wheel, trackpad, drag gesture, arrow keys, and an on-screen range control. Mobile switches to a vertical document timeline.
+The timeline tells the fictional life of "Project Ironwood," a wheel loader program spanning 1954 to 2026. Desktop uses a full-height horizontal rail controlled by the wheel, trackpad, drag gesture, and arrow keys. Mobile switches to a vertical document timeline.
 
-Milestones use the full content range: multiple events, event links, hover media, floating draggable photo cards, badges, organization marks, mentors and collaborators, custom age labels, a current-year marker, and a clickable finale effect. A restrained industrial palette, technical labels, warm archival media, and large condensed typography connect the page to construction machinery without copying the existing field-test screen.
+The visual treatment will faithfully port the upstream Lifeline demo rather than inventing a project-specific theme. It uses a quiet white canvas, Geist-like sans typography, zinc text, a hairline dashed rail, sparse year columns, minimal navigation, blue and pink people markers, and lightly tilted media cards. Dark mode mirrors upstream's black and zinc palette. The generated machine history remains custom.
+
+Every year from 1954 through 2026 receives a marker so the empty time between milestones is visible. Milestone years can carry multiple events, event links, hover media, floating draggable photo cards, badges, organization marks, mentors and collaborators, custom age labels, a current-year marker, and a clickable finale effect.
 
 ## Structure
 
 - `LifelinePage.jsx` owns page state, navigation, progress, lightbox state, and responsive rendering.
 - `lifelineData.js` defines and normalizes milestone data into a stable array.
-- `lifeline.css` contains the isolated responsive layout, motion, and visual styling.
+- `lifeline.css` ports the upstream demo's responsive layout, spacing, colors, motion, and typography into isolated plain CSS.
 - `App.jsx` registers the `/lifeline` route and gives its top navigation a matching theme.
 
 ## Behavior and accessibility
