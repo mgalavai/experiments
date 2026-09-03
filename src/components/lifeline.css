@@ -1,45 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import '@fontsource-variable/geist';
 
 .lifeline-page {
-  --life-bg: #0b0c0b;
-  --life-panel: #131512;
-  --life-ink: #f1efe6;
-  --life-muted: #8e9189;
-  --life-faint: #343731;
-  --life-accent: #ffd51f;
-  --life-photo-bg: #d6d0bd;
+  --life-bg: #fff;
+  --life-ink: #18181b;
+  --life-copy: #71717a;
+  --life-muted: #a1a1aa;
+  --life-faint: #d4d4d8;
+  --life-hover: #000;
+  --life-card: #fff;
   position: relative;
   height: 100dvh;
-  min-height: 650px;
+  min-height: 620px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 68% 52%, rgb(255 213 31 / 5%), transparent 30%),
-    linear-gradient(115deg, transparent 0 49.8%, rgb(255 255 255 / 2%) 50%, transparent 50.2%),
-    var(--life-bg);
+  background: var(--life-bg);
   color: var(--life-ink);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Geist Variable', 'Helvetica Neue', sans-serif;
   transition: background-color 300ms ease, color 300ms ease;
-  isolation: isolate;
 }
 
-.lifeline-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.32;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
-}
-
-.lifeline-page--light {
-  --life-bg: #eeece3;
-  --life-panel: #dedbcf;
-  --life-ink: #171914;
-  --life-muted: #62655e;
-  --life-faint: #b8b8ae;
-  --life-accent: #e9b900;
-  --life-photo-bg: #fffdf4;
+.lifeline-page--dark {
+  --life-bg: #000;
+  --life-ink: #fafafa;
+  --life-copy: #71717a;
+  --life-muted: #52525b;
+  --life-faint: #27272a;
+  --life-hover: #fff;
+  --life-card: #09090b;
 }
 
 .lifeline-header {
@@ -48,109 +34,75 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 86px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  height: 64px;
+  display: flex;
   align-items: center;
-  padding: 0 38px;
-  border-bottom: 1px solid var(--life-faint);
-  background: color-mix(in srgb, var(--life-bg) 88%, transparent);
-  backdrop-filter: blur(14px);
+  justify-content: space-between;
+  width: min(100% - 48px, 976px);
+  margin: 0 auto;
+  background: var(--life-bg);
+  transition: background-color 300ms ease, border-color 300ms ease;
 }
 
+.lifeline-header::after,
+.lifeline-footer::before {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--life-faint);
+  transition: background-color 300ms ease;
+}
+
+.lifeline-header::after { top: 63px; }
+.lifeline-footer::before { bottom: 79px; }
+
 .lifeline-brand {
-  display: inline-flex;
-  justify-self: start;
-  align-items: center;
-  gap: 12px;
-  color: inherit;
+  color: var(--life-ink);
+  font-size: 14px;
+  font-weight: 560;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 
-.lifeline-brand svg {
-  width: 43px;
-  fill: none;
-  stroke: var(--life-accent);
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-
-.lifeline-brand span {
-  font: 500 12px/0.88 'IBM Plex Mono', monospace;
-  letter-spacing: 0.04em;
-}
-
-.lifeline-brand b {
-  font-size: 10px;
-  color: var(--life-muted);
-}
-
-.lifeline-header__copy {
-  text-align: center;
-}
-
-.lifeline-header__copy p {
-  margin-bottom: 4px;
-  font-size: 14px;
-  letter-spacing: 0.04em;
-}
-
-.lifeline-header__copy span,
-.lifeline-theme span {
-  color: var(--life-muted);
-  font: 500 9px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.12em;
-}
-
 .lifeline-theme {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 11px;
-  border: 1px solid var(--life-faint);
-  color: inherit;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--life-copy);
   cursor: pointer;
+  transition: color 180ms ease, background-color 180ms ease;
 }
 
-.lifeline-theme i {
-  display: block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--life-accent);
-  box-shadow: 0 0 12px var(--life-accent);
+.lifeline-theme:hover {
+  background: color-mix(in srgb, var(--life-ink) 6%, transparent);
+  color: var(--life-ink);
+}
+
+.lifeline-theme span {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .lifeline-stage {
   position: absolute;
-  inset: 86px 0 62px;
+  inset: 64px 0 80px;
   overflow: hidden;
   touch-action: none;
-  cursor: grab;
+  cursor: ew-resize;
   outline: none;
-}
-
-.lifeline-stage:active {
-  cursor: grabbing;
-}
-
-.lifeline-stage:focus-visible::after {
-  content: '';
-  position: absolute;
-  z-index: 30;
-  inset: 8px;
-  border: 1px solid var(--life-accent);
-  pointer-events: none;
+  user-select: none;
 }
 
 .lifeline-track {
   position: absolute;
   top: 50%;
-  left: 66px;
+  left: 96px;
   height: 1px;
   will-change: transform;
-  transition: transform 90ms linear;
 }
 
 .lifeline-rail {
@@ -158,226 +110,248 @@
   left: 0;
   right: 0;
   top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--life-accent), var(--life-ink) 8%, var(--life-faint) 78%, var(--life-accent));
+  height: 1px;
+  border-top: 1px dashed var(--life-faint);
   transform-origin: left center;
+  transition: border-color 300ms ease;
 }
 
 .is-intro .lifeline-rail {
-  animation: lifelineRailDraw 1450ms cubic-bezier(0.7, 0, 0.2, 1) both;
+  animation: lifelineRailDraw 1450ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .lifeline-labels {
   position: absolute;
-  left: -42px;
-  top: -34px;
+  z-index: 18;
+  top: 50%;
+  left: 0;
+  width: 100px;
+  height: 96px;
+  transform: translateY(-80px);
   display: grid;
-  gap: 10px;
-  color: var(--life-muted);
-  font: 500 8px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.14em;
-  text-align: right;
+  grid-template-rows: 40px 40px;
+  align-items: start;
+  padding: 0 18px;
+  background: var(--life-bg);
+  color: var(--life-copy);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  transition: background 300ms ease, color 300ms ease;
 }
 
 .lifeline-marker {
   position: absolute;
   top: 0;
-  width: 316px;
+  width: 288px;
   height: 1px;
+  padding-right: 32px;
+  color: var(--life-copy);
+  transition: color 300ms ease, opacity 300ms ease;
 }
 
-.lifeline-marker:nth-of-type(1) { left: 40px; }
-.lifeline-marker:nth-of-type(2) { left: 400px; }
-.lifeline-marker:nth-of-type(3) { left: 760px; }
-.lifeline-marker:nth-of-type(4) { left: 1120px; }
-.lifeline-marker:nth-of-type(5) { left: 1480px; }
-.lifeline-marker:nth-of-type(6) { left: 1840px; }
-.lifeline-marker:nth-of-type(7) { left: 2200px; }
-.lifeline-marker:nth-of-type(8) { left: 2560px; }
-.lifeline-marker:nth-of-type(9) { left: 2920px; }
-.lifeline-marker:nth-of-type(10) { left: 3280px; }
-.lifeline-marker:nth-of-type(11) { left: 3640px; }
+.lifeline-marker:hover { color: var(--life-hover); }
 
 .lifeline-marker__axis {
   position: absolute;
-  top: -30px;
+  top: -80px;
   left: 0;
   display: grid;
-  grid-template-rows: 22px 16px 22px;
-  justify-items: center;
-  align-items: center;
+  grid-template-rows: 16px 20px 28px;
+  row-gap: 20px;
+  align-items: start;
+  color: var(--life-copy);
 }
 
-.lifeline-marker__year,
 .lifeline-marker__age {
-  font: 500 10px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
+  height: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
-.lifeline-marker__age { color: var(--life-muted); }
+.lifeline-marker__year {
+  height: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .lifeline-marker__dot {
-  width: 11px;
-  height: 11px;
-  border: 2px solid var(--life-bg);
-  outline: 1px solid var(--life-accent);
-  border-radius: 50%;
-  background: var(--life-accent);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--life-accent) 10%, transparent);
+  align-self: end;
+  display: block;
+  width: 1px;
+  height: 10px;
+  transform: translateY(5px);
+  background: var(--life-muted);
+  transition: height 180ms ease, background-color 180ms ease;
+}
+
+.lifeline-marker:hover .lifeline-marker__dot {
+  height: 14px;
+  background: var(--life-hover);
 }
 
 .lifeline-marker__content {
   position: absolute;
+  top: 25px;
   left: 0;
-  width: 274px;
-  padding-left: 22px;
-  border-left: 1px solid var(--life-faint);
-}
-
-.is-above .lifeline-marker__content { bottom: 52px; padding-bottom: 18px; }
-.is-below .lifeline-marker__content { top: 52px; padding-top: 18px; }
-
-.lifeline-marker__meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 9px;
-  color: var(--life-accent);
-  font: 500 9px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.lifeline-marker__meta span:last-child { color: var(--life-muted); }
-
-.lifeline-marker h2 {
-  max-width: 245px;
-  margin: 0 0 12px;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 0.94;
-  letter-spacing: -0.025em;
-  text-transform: uppercase;
+  width: 288px;
+  padding-right: 32px;
 }
 
 .lifeline-events {
   display: grid;
-  gap: 7px;
+  min-height: 52px;
+  gap: 16px;
 }
 
-.lifeline-event {
-  display: grid;
-  grid-template-columns: 10px 1fr auto;
-  align-items: start;
-  gap: 6px;
+.lifeline-events p {
+  max-width: 288px;
+  margin: 0;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+.lifeline-events p.has-effect { cursor: pointer; }
+
+.lifeline-events button {
+  margin-left: 5px;
   color: var(--life-muted);
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.lifeline-event::before {
-  content: '—';
-  color: var(--life-faint);
-}
-
-.lifeline-event button,
-.lifeline-event a {
-  align-self: start;
-  color: var(--life-accent);
-  font: 500 8px/1.2 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
-  text-decoration: none;
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
-  white-space: nowrap;
+  vertical-align: baseline;
 }
 
-.lifeline-event button:hover,
-.lifeline-event a:hover { text-decoration: underline; }
-.lifeline-event.has-effect { color: var(--life-ink); }
-
-.lifeline-arrow {
-  width: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.4;
-  vertical-align: middle;
+.lifeline-events a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--life-faint);
+  text-underline-offset: 3px;
 }
 
-.lifeline-arrow--left { transform: rotate(180deg); }
+.lifeline-events a:hover { text-decoration-color: currentColor; }
 
-.lifeline-badges,
-.lifeline-companies {
+.lifeline-badges {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 12px;
+  min-height: 0;
+  gap: 8px;
+  margin-bottom: 12px;
 }
+
+.lifeline-badges:empty { display: none; }
 
 .lifeline-badges span {
-  padding: 3px 5px;
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0 5px;
   border: 1px solid var(--life-faint);
-  color: var(--life-muted);
-  font: 500 8px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
+  border-radius: 5px;
+  color: var(--life-copy);
+  font-size: 8px;
+  font-weight: 600;
 }
 
+.lifeline-companies {
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.lifeline-companies:empty { display: none; }
+
 .lifeline-companies span {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--life-muted);
-  font-size: 10px;
 }
 
 .lifeline-companies i {
   display: grid;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   place-items: center;
-  border-radius: 50%;
-  background: var(--life-ink);
-  color: var(--life-bg);
-  font: normal 600 8px/1 'IBM Plex Mono', monospace;
+  border: 1px solid var(--life-faint);
+  border-radius: 6px;
+  color: var(--life-copy);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 600;
 }
 
+.lifeline-companies b {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: none;
+  transform: translateX(-50%);
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--life-hover);
+  color: var(--life-bg);
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.lifeline-companies span:hover b { display: block; }
+
 .lifeline-people {
-  display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 5px;
+  display: flex;
   align-items: center;
-  margin-top: 8px;
+  gap: 7px;
+  margin-top: 18px;
 }
 
 .lifeline-people > span {
-  color: var(--life-muted);
-  font: 500 7px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: none;
 }
 
-.lifeline-people > div { display: flex; gap: 4px; }
+.lifeline-people > div {
+  display: flex;
+  gap: 6px;
+}
 
 .lifeline-person {
   position: relative;
   display: grid;
-  width: 21px;
-  height: 21px;
+  width: 28px;
+  height: 28px;
   place-items: center;
-  border: 1px solid var(--life-faint);
+  border: 2px solid var(--life-bg);
   border-radius: 50%;
-  color: var(--life-ink);
-  font: 500 8px/1 'IBM Plex Mono', monospace;
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #3b82f6 30%, transparent);
+  font-size: 10px;
+  font-weight: 600;
 }
+
+.lifeline-people + .lifeline-people { margin-top: 8px; }
+.lifeline-people + .lifeline-people .lifeline-person { background: #ec4899; box-shadow: 0 0 0 1px color-mix(in srgb, #ec4899 30%, transparent); }
 
 .lifeline-person b {
   position: absolute;
-  bottom: calc(100% + 5px);
+  bottom: calc(100% + 6px);
   left: 50%;
   display: none;
-  padding: 4px 6px;
   transform: translateX(-50%);
-  background: var(--life-ink);
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--life-hover);
   color: var(--life-bg);
-  font: 500 8px/1 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -387,52 +361,57 @@
   position: absolute;
   z-index: 6;
   top: var(--photo-y);
-  left: 184px;
+  left: 118px;
   width: 128px;
-  padding: 7px 7px 22px;
+  padding: 6px;
   transform: translate(var(--photo-x), var(--photo-drag-y)) rotate(var(--photo-rotate));
-  border: 0;
-  background: var(--life-photo-bg);
-  box-shadow: 0 16px 35px rgb(0 0 0 / 28%);
-  color: #22231f;
+  border: 1px solid var(--life-faint);
+  border-radius: 5px;
+  background: var(--life-card);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 9%);
+  color: var(--life-copy);
   cursor: grab;
   touch-action: none;
-  transition: box-shadow 180ms ease;
+  transition: box-shadow 180ms ease, background-color 300ms ease;
 }
 
-.lifeline-photo:active { cursor: grabbing; box-shadow: 0 22px 50px rgb(0 0 0 / 38%); }
-.lifeline-photo--wide { width: 165px; }
-.lifeline-photo img { display: block; width: 100%; height: 82px; object-fit: cover; pointer-events: none; }
-.lifeline-photo--wide img { height: 96px; }
-
-.lifeline-photo span {
-  position: absolute;
-  bottom: 7px;
-  left: 8px;
-  font: 500 8px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.03em;
-}
+.lifeline-photo:active { cursor: grabbing; box-shadow: 0 12px 36px rgb(0 0 0 / 15%); }
+.lifeline-photo--wide { width: 164px; }
+.lifeline-photo img { display: block; width: 100%; height: 82px; border-radius: 2px; object-fit: cover; pointer-events: none; }
+.lifeline-photo--wide img { height: 98px; }
+.lifeline-photo span { display: none; }
 
 .lifeline-photo i {
   position: absolute;
-  right: 8px;
-  bottom: 5px;
-  font: normal 15px/1 'IBM Plex Mono', monospace;
+  right: 9px;
+  bottom: 8px;
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 88%);
+  color: #3f3f46;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1;
 }
 
 .lifeline-preview {
   position: fixed;
   z-index: 40;
-  width: 230px;
-  padding: 7px 7px 24px;
-  transform: translate(22px, -50%);
+  width: 220px;
+  padding: 6px;
+  transform: translate(20px, -50%);
+  border: 1px solid var(--life-faint);
+  border-radius: 6px;
+  background: var(--life-card);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 12%);
   pointer-events: none;
-  background: var(--life-photo-bg);
-  box-shadow: 0 18px 55px rgb(0 0 0 / 35%);
 }
 
-.lifeline-preview img { display: block; width: 100%; height: 140px; object-fit: cover; }
-.lifeline-preview span { position: absolute; bottom: 7px; left: 8px; color: #22231f; font: 500 8px/1 'IBM Plex Mono', monospace; }
+.lifeline-preview img { display: block; width: 100%; height: 138px; border-radius: 3px; object-fit: cover; }
+.lifeline-preview span { display: none; }
 
 .lifeline-footer {
   position: absolute;
@@ -440,50 +419,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 62px;
-  display: grid;
-  grid-template-columns: 1fr minmax(260px, 540px) 1fr;
-  align-items: center;
-  gap: 26px;
-  padding: 0 38px;
-  border-top: 1px solid var(--life-faint);
-  background: color-mix(in srgb, var(--life-bg) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
-
-.lifeline-instruction,
-.lifeline-legend,
-.lifeline-footer label {
+  height: 80px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: var(--life-muted);
-  font: 500 8px/1 'IBM Plex Mono', monospace;
-  letter-spacing: 0.1em;
-}
-
-.lifeline-footer label { gap: 10px; }
-.lifeline-footer input { width: 100%; accent-color: var(--life-accent); cursor: ew-resize; }
-.lifeline-legend { justify-self: end; gap: 16px; }
-.lifeline-legend span { display: inline-flex; align-items: center; gap: 5px; }
-.lifeline-legend i { width: 16px; height: 16px; border: 1px solid var(--life-faint); border-radius: 50%; }
-.lifeline-legend span:last-child i { background: var(--life-accent); border-color: var(--life-accent); }
-
-.lifeline-intro-copy {
-  position: absolute;
-  z-index: 50;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8vw;
+  width: min(100% - 48px, 976px);
+  margin: 0 auto;
   background: var(--life-bg);
-  pointer-events: none;
-  animation: lifelineIntroAway 450ms 1250ms ease both;
+  transition: background-color 300ms ease, border-color 300ms ease;
 }
 
-.lifeline-intro-copy strong { color: var(--life-ink); font-size: clamp(48px, 8vw, 118px); line-height: 0.76; letter-spacing: -0.055em; text-align: center; }
-.lifeline-intro-copy span { color: var(--life-accent); font: 500 11px/1 'IBM Plex Mono', monospace; }
+.lifeline-legend {
+  display: flex;
+  gap: 24px;
+  color: var(--life-copy);
+  font-size: 13px;
+}
+
+.lifeline-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.lifeline-legend i { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
+.lifeline-legend span:last-child i { background: #ec4899; }
 
 .lifeline-lightbox {
   position: fixed;
@@ -492,15 +446,25 @@
   display: grid;
   place-items: center;
   padding: 6vh 6vw;
-  background: rgb(0 0 0 / 84%);
-  backdrop-filter: blur(12px);
+  background: rgb(0 0 0 / 82%);
+  backdrop-filter: blur(10px);
   animation: lifelineFadeIn 180ms ease both;
 }
 
-.lifeline-lightbox > div { position: relative; max-width: 960px; max-height: 86vh; padding: 11px 11px 44px; background: #e9e5d7; box-shadow: 0 35px 100px #000; color: #171914; }
-.lifeline-lightbox img { display: block; width: 100%; max-height: calc(86vh - 55px); object-fit: contain; }
-.lifeline-lightbox p { position: absolute; left: 13px; bottom: 14px; font: 500 10px/1 'IBM Plex Mono', monospace; }
-.lifeline-lightbox button { position: absolute; right: 12px; bottom: 10px; color: #171914; font: 500 9px/1 'IBM Plex Mono', monospace; cursor: pointer; }
+.lifeline-lightbox > div {
+  position: relative;
+  max-width: 960px;
+  max-height: 86vh;
+  padding: 8px 8px 42px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 45%);
+  color: #18181b;
+}
+
+.lifeline-lightbox img { display: block; width: 100%; max-height: calc(86vh - 52px); border-radius: 4px; object-fit: contain; }
+.lifeline-lightbox p { position: absolute; left: 12px; bottom: 14px; font-size: 12px; }
+.lifeline-lightbox button { position: absolute; right: 12px; bottom: 9px; color: #52525b; font-size: 10px; cursor: pointer; }
 .lifeline-lightbox button span { margin-left: 5px; font-size: 18px; vertical-align: middle; }
 
 .lifeline-celebration {
@@ -508,16 +472,16 @@
   z-index: 1400;
   inset: 0;
   overflow: hidden;
+  background: rgb(0 0 0 / 78%);
   pointer-events: none;
-  background: rgb(4 8 7 / 68%);
   animation: lifelineFadeIn 200ms ease both, lifelineFadeOut 500ms 3100ms ease both;
 }
 
 .lifeline-celebration i {
   position: absolute;
   top: -20px;
-  width: 4px;
-  height: 28px;
+  width: 3px;
+  height: 18px;
   background: var(--color);
   animation: lifelineConfetti 1800ms var(--delay) cubic-bezier(0.2, 0.6, 0.35, 1) both;
 }
@@ -527,57 +491,46 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: #f1efe6;
-  font: 700 clamp(64px, 13vw, 190px)/0.72 'Barlow Condensed', sans-serif;
-  letter-spacing: -0.06em;
+  color: #fff;
+  font-size: clamp(52px, 9vw, 120px);
+  font-weight: 530;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
   text-align: center;
-  text-shadow: 0 0 80px rgb(255 213 31 / 35%);
   animation: lifelineImpact 2600ms 180ms cubic-bezier(0.2, 1, 0.3, 1) both;
 }
 
 @keyframes lifelineRailDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes lifelineIntroAway { to { opacity: 0; visibility: hidden; } }
 @keyframes lifelineFadeIn { from { opacity: 0; } }
 @keyframes lifelineFadeOut { to { opacity: 0; } }
-@keyframes lifelineConfetti { 0% { transform: translate3d(0, -20px, 0) rotate(0); } 100% { transform: translate3d(var(--drift), 110vh, 0) rotate(560deg); } }
-@keyframes lifelineImpact { 0% { opacity: 0; transform: scale(0.78); } 18%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.06); } }
+@keyframes lifelineConfetti { from { transform: translate3d(0, -20px, 0) rotate(0); } to { transform: translate3d(var(--drift), 110vh, 0) rotate(560deg); } }
+@keyframes lifelineImpact { 0% { opacity: 0; transform: scale(0.9); } 18%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.04); } }
 
 @media (max-width: 820px) {
   .lifeline-page { height: auto; min-height: 100dvh; overflow: visible; }
-  .lifeline-header { position: sticky; height: 74px; grid-template-columns: 1fr auto; padding: 0 18px; }
-  .lifeline-header__copy { display: none; }
-  .lifeline-stage { position: relative; inset: auto; min-height: calc(100dvh - 74px); overflow: visible; touch-action: pan-y; cursor: auto; }
-  .lifeline-track { position: relative; top: auto; left: auto; width: auto !important; height: auto; padding: 68px 22px 110px 82px; transform: none !important; transition: none; }
-  .lifeline-rail { top: 68px; bottom: 110px; left: 56px; right: auto; width: 2px; height: auto; background: linear-gradient(var(--life-accent), var(--life-faint) 88%, var(--life-accent)); }
-  .is-intro .lifeline-rail { animation: none; }
+  .lifeline-header { position: sticky; width: calc(100% - 40px); height: 64px; }
+  .lifeline-stage { position: relative; inset: auto; min-height: calc(100dvh - 64px); overflow: visible; touch-action: pan-y; cursor: auto; }
   .lifeline-labels { display: none; }
-  .lifeline-marker { position: relative; top: auto; left: auto !important; width: auto; height: auto; min-height: 360px; padding-bottom: 80px; }
-  .lifeline-marker__axis { top: -5px; left: -53px; grid-template-rows: auto auto; gap: 9px; }
-  .lifeline-marker__year { order: 2; writing-mode: vertical-rl; }
+  .lifeline-track { position: relative; top: auto; left: auto; width: auto !important; height: auto; padding: 68px 22px 100px 82px; transform: none !important; }
+  .lifeline-rail { top: 68px; bottom: 100px; left: 56px; right: auto; width: 1px; height: auto; border-top: 0; border-left: 1px dashed var(--life-faint); }
+  .is-intro .lifeline-rail { animation: none; }
+  .lifeline-marker { position: relative; top: auto; left: auto !important; width: auto; height: auto; min-height: 58px; padding: 0; }
+  .lifeline-marker.has-content { min-height: 260px; padding-bottom: 68px; }
+  .lifeline-marker__axis { top: 0; left: -53px; grid-template-rows: auto auto; gap: 9px; }
   .lifeline-marker__age { display: none; }
-  .lifeline-marker__dot { order: 1; }
-  .lifeline-marker__content,
-  .is-above .lifeline-marker__content,
-  .is-below .lifeline-marker__content { position: relative; top: auto; bottom: auto; left: auto; width: auto; max-width: 460px; min-height: 245px; padding: 0 0 0 20px; }
-  .lifeline-marker h2 { max-width: 330px; font-size: clamp(32px, 10vw, 46px); }
-  .lifeline-event { font-size: 15px; }
-  .lifeline-photo { position: relative; top: auto; left: auto; margin: 18px 0 0 22px; transform: rotate(var(--photo-rotate)); }
+  .lifeline-marker__year { order: 2; writing-mode: vertical-rl; font-size: 12px; }
+  .lifeline-marker__dot { order: 1; width: 9px; height: 1px; transform: translate(-4px, 4px); }
+  .lifeline-marker:hover .lifeline-marker__dot { width: 13px; height: 1px; }
+  .lifeline-marker__content { position: relative; top: auto; left: auto; width: auto; max-width: 360px; padding: 0 0 0 20px; }
+  .lifeline-events p { max-width: 320px; font-size: 15px; }
+  .lifeline-photo { position: relative; top: auto; left: auto; margin: 22px 0 0 20px; transform: rotate(var(--photo-rotate)); }
   .lifeline-preview { display: none; }
   .lifeline-footer { display: none; }
-  .lifeline-intro-copy { display: none; }
   .lifeline-lightbox { z-index: 2100; padding: 18px; }
-  .lifeline-celebration strong { font-size: 22vw; }
-}
-
-@media (max-height: 720px) and (min-width: 821px) {
-  .lifeline-marker h2 { font-size: 23px; }
-  .lifeline-event { font-size: 11px; }
-  .lifeline-marker__content { transform: scale(0.9); transform-origin: left bottom; }
-  .is-below .lifeline-marker__content { transform-origin: left top; }
-  .lifeline-photo { scale: 0.82; }
+  .lifeline-celebration strong { font-size: 18vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lifeline-page *, .lifeline-page *::before, .lifeline-page *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+  .lifeline-page *, .lifeline-page *::before, .lifeline-page *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
   .lifeline-celebration i { display: none; }
 }

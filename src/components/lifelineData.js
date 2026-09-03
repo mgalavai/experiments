@@ -74,7 +74,7 @@ const milestones = {
       { text: 'Bucket. Fork. Sweeper. Snow blade. No workshop stop between them.' },
     ],
     companies: ['Attachments Lab', 'Operators Guild'],
-    photos: [{ ...media.prototype, caption: 'Coupler study', rotate: 3, y: 82 }],
+    photos: [{ ...media.prototype, caption: 'Coupler study', rotate: 3, y: -188 }],
   },
   1995: {
     id: 'telemetry',
@@ -144,7 +144,7 @@ const milestones = {
     ],
     badges: ['BEV', '0g'],
     companies: ['Volvo Energy', 'Northvolt'],
-    photos: [{ ...media.electric, caption: 'Night charge, bay 04', rotate: 4, y: 68 }],
+    photos: [{ ...media.electric, caption: 'Night charge, bay 04', rotate: 4, y: -186 }],
   },
   2025: {
     id: 'digital-twin',
@@ -187,9 +187,16 @@ export const ironwoodLifeline = {
     mentors: 'Guided by',
     met: 'Built with',
   },
-  markers: Object.entries(milestones).map(([year, milestone]) => ({
-    year: Number(year),
-    age: milestone.age ?? String(Number(year) - 1954).padStart(2, '0'),
-    ...milestone,
-  })),
+  markers: Array.from({ length: 2026 - 1954 + 1 }, (_, index) => {
+    const year = 1954 + index
+    const milestone = milestones[year] ?? {}
+
+    return {
+      year,
+      age: milestone.age ?? year - 1954,
+      id: milestone.id ?? `year-${year}`,
+      events: [],
+      ...milestone,
+    }
+  }),
 }

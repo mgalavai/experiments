@@ -1,28 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ironwoodLifeline } from './lifelineData'
 import './lifeline.css'
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value))
-
-function ArrowIcon({ direction = 'right' }) {
-  return (
-    <svg className={`lifeline-arrow lifeline-arrow--${direction}`} viewBox="0 0 18 18" aria-hidden="true">
-      <path d="M3 9h11M10 5l4 4-4 4" />
-    </svg>
-  )
-}
-
-function MachineMark() {
-  return (
-    <svg viewBox="0 0 44 32" aria-hidden="true">
-      <path d="M3 23h34l-4-9h-9l-6-5H8l-3 9m20-4 1-8h8l3 8" />
-      <circle cx="11" cy="24" r="5" />
-      <circle cx="31" cy="24" r="5" />
-      <path d="m37 14 5-3v9h-3" />
-    </svg>
-  )
-}
 
 function MediaCard({ photo, index, onOpen }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -92,48 +73,49 @@ function PeopleRow({ label, people }) {
   )
 }
 
-function Marker({ marker, index, onPreview, onOpen, onCelebrate }) {
-  const isAbove = index % 2 === 0
+function Marker({ marker, offset, onPreview, onOpen, onCelebrate }) {
+  const hasContent = Boolean(
+    marker.events.length || marker.badges?.length || marker.companies?.length ||
+    marker.mentors?.length || marker.met?.length,
+  )
+
   return (
-    <article className={`lifeline-marker ${isAbove ? 'is-above' : 'is-below'}`} id={marker.id}>
+    <article className={`lifeline-marker ${hasContent ? 'has-content' : ''}`} id={marker.id} style={{ left: `${offset}px` }}>
       <div className="lifeline-marker__axis">
+        <span className="lifeline-marker__age">{marker.age}</span>
         <span className="lifeline-marker__year">{marker.year}</span>
         <span className="lifeline-marker__dot" aria-hidden="true" />
-        <span className="lifeline-marker__age">{marker.age}</span>
       </div>
-      <div className="lifeline-marker__content">
-        <div className="lifeline-marker__meta">
-          <span>{marker.eyebrow}</span>
-          <span>{String(index + 1).padStart(2, '0')} / {String(ironwoodLifeline.markers.length).padStart(2, '0')}</span>
+      {hasContent ? (
+        <div className="lifeline-marker__content">
+          <div className="lifeline-badges" aria-label="Milestone badges">
+            {marker.badges?.map((badge) => <span key={badge}>{badge}</span>)}
+          </div>
+          <div className="lifeline-companies">
+            {marker.companies?.map((company) => (
+              <span key={company}><i aria-hidden="true">{company.slice(0, 1)}</i><b>{company}</b></span>
+            ))}
+          </div>
+          <div className="lifeline-events">
+            {marker.events.map((event, eventIndex) => (
+              <p
+                className={`${event.image ? 'has-media' : ''} ${event.effect ? 'has-effect' : ''}`}
+                key={`${marker.id}-${eventIndex}`}
+                onMouseEnter={(e) => event.image && onPreview(event.image, e)}
+                onMouseMove={(e) => event.image && onPreview(event.image, e)}
+                onMouseLeave={() => event.image && onPreview(null)}
+                onClick={event.effect ? onCelebrate : undefined}
+              >
+                {event.text}
+                {event.image ? <button type="button" onClick={() => onOpen(event.image)} aria-label={`Open image: ${event.image.alt}`}>▧</button> : null}
+                {event.href ? <> <a href={event.href}>{event.linkLabel}</a></> : null}
+              </p>
+            ))}
+          </div>
+          <PeopleRow label={ironwoodLifeline.legend.mentors} people={marker.mentors} />
+          <PeopleRow label={ironwoodLifeline.legend.met} people={marker.met} />
         </div>
-        <h2>{marker.title}</h2>
-        <div className="lifeline-events">
-          {marker.events.map((event, eventIndex) => (
-            <div
-              className={`lifeline-event ${event.image ? 'has-media' : ''} ${event.effect ? 'has-effect' : ''}`}
-              key={`${marker.id}-${eventIndex}`}
-              onMouseEnter={(e) => event.image && onPreview(event.image, e)}
-              onMouseMove={(e) => event.image && onPreview(event.image, e)}
-              onMouseLeave={() => event.image && onPreview(null)}
-            >
-              <span>{event.text}</span>
-              {event.image ? <button type="button" onClick={() => onOpen(event.image)} aria-label={`Open image: ${event.image.alt}`}>VIEW</button> : null}
-              {event.href ? <a href={event.href}>{event.linkLabel}</a> : null}
-              {event.effect ? <button type="button" onClick={onCelebrate}>IGNITE <ArrowIcon /></button> : null}
-            </div>
-          ))}
-        </div>
-        <div className="lifeline-badges" aria-label="Milestone badges">
-          {marker.badges?.map((badge) => <span key={badge}>{badge}</span>)}
-        </div>
-        <div className="lifeline-companies">
-          {marker.companies?.map((company) => (
-            <span key={company}><i aria-hidden="true">{company.slice(0, 1)}</i>{company}</span>
-          ))}
-        </div>
-        <PeopleRow label={ironwoodLifeline.legend.mentors} people={marker.mentors} />
-        <PeopleRow label={ironwoodLifeline.legend.met} people={marker.met} />
-      </div>
+      ) : null}
       {marker.photos?.map((photo, photoIndex) => (
         <MediaCard key={photo.caption} photo={photo} index={photoIndex} onOpen={onOpen} />
       ))}
@@ -186,7 +168,7 @@ function Celebration({ run }) {
 export default function LifelinePage() {
   const [progress, setProgress] = useState(1)
   const [intro, setIntro] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [theme, setTheme] = useState('dark')
+  const [theme, setTheme] = useState('light')
   const [preview, setPreview] = useState(null)
   const [lightbox, setLightbox] = useState(null)
   const [celebration, setCelebration] = useState(0)
@@ -211,10 +193,6 @@ export default function LifelinePage() {
     const timer = window.setTimeout(() => setCelebration(0), 3600)
     return () => window.clearTimeout(timer)
   }, [celebration])
-
-  const updateProgress = useCallback((next) => {
-    setProgress(clamp(typeof next === 'function' ? next(progress) : next))
-  }, [progress])
 
   const onWheel = (event) => {
     if (window.matchMedia('(max-width: 820px)').matches) return
@@ -256,23 +234,28 @@ export default function LifelinePage() {
     setPreview({ ...mediaItem, x: event.clientX, y: event.clientY })
   }
 
-  const trackWidth = markers.length * 360 + 260
-  const travel = `calc(${trackWidth}px - 100vw + 64px)`
+  const layout = useMemo(() => {
+    const widths = markers.map((marker) => {
+      const hasContent = marker.events.length || marker.photos?.length || marker.companies?.length || marker.mentors?.length || marker.met?.length
+      return hasContent ? 288 : 80
+    })
+    const positions = widths.reduce(
+      (result, width) => ({ offsets: [...result.offsets, result.width], width: result.width + width }),
+      { offsets: [], width: 0 },
+    )
+    return { offsets: positions.offsets, width: positions.width + 160 }
+  }, [markers])
+  const trackWidth = layout.width
+  const travel = `calc(${trackWidth}px - 100vw + 160px)`
 
   return (
     <main className={`lifeline-page lifeline-page--${theme} ${intro ? 'is-intro' : ''}`}>
       <header className="lifeline-header" data-site-nav-inner>
         <Link to="/" className="lifeline-brand" data-site-nav-logo aria-label="Back to gallery">
-          <MachineMark />
-          <span>IRONWOOD<br /><b>LIFELINE</b></span>
+          Lifeline
         </Link>
-        <div className="lifeline-header__copy">
-          <p>{ironwoodLifeline.description}</p>
-          <span>FICTIONAL ARCHIVE / 11 MILESTONES</span>
-        </div>
         <button type="button" className="lifeline-theme" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')} aria-label={`Use ${theme === 'dark' ? 'light' : 'dark'} theme`}>
-          <span>{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
-          <i aria-hidden="true" />
+          <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
         </button>
       </header>
 
@@ -288,11 +271,7 @@ export default function LifelinePage() {
         tabIndex="0"
         aria-label={`${ironwoodLifeline.name} timeline. Use arrow keys to move through time.`}
       >
-        <div className="lifeline-intro-copy" aria-hidden={!intro}>
-          <span>1954</span>
-          <strong>A MACHINE<br />LEARNS TO MOVE</strong>
-          <span>2026</span>
-        </div>
+        <div className="lifeline-labels" aria-hidden="true"><span>AGE</span><span>YEARS</span></div>
         <div
           className="lifeline-track"
           style={{
@@ -302,13 +281,10 @@ export default function LifelinePage() {
           }}
         >
           <div className="lifeline-rail" />
-          <div className="lifeline-labels" aria-hidden="true">
-            <span>YEAR</span><span>AGE</span><span>EVENTS</span>
-          </div>
           {markers.map((marker, index) => (
             <Marker
               marker={marker}
-              index={index}
+              offset={layout.offsets[index]}
               key={marker.id}
               onPreview={onPreview}
               onOpen={setLightbox}
@@ -325,13 +301,7 @@ export default function LifelinePage() {
       </section>
 
       <footer className="lifeline-footer">
-        <div className="lifeline-instruction"><ArrowIcon direction="left" /> SCROLL / DRAG / KEYS <ArrowIcon /></div>
-        <label>
-          <span>{markers[0].year}</span>
-          <input type="range" min="0" max="1000" value={Math.round(progress * 1000)} onChange={(event) => { setIntro(false); updateProgress(Number(event.target.value) / 1000) }} aria-label="Timeline position" />
-          <span>{markers.at(-1).year}</span>
-        </label>
-        <div className="lifeline-legend"><span><i /> GUIDED BY</span><span><i /> BUILT WITH</span></div>
+        <div className="lifeline-legend"><span><i /> Mentors</span><span><i /> Met in person</span></div>
       </footer>
 
       <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
