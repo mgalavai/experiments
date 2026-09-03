@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-labelledby="title desc">
-  <title id="title">Loader prototype cutaway</title><desc id="desc">A blue technical cutaway illustration of a wheel loader.</desc>
-  <defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#5d8d9b" stroke-width="1" opacity=".24"/></pattern></defs>
-  <rect width="1000" height="700" fill="#143f4c"/><rect width="1000" height="700" fill="url(#g)"/>
-  <g fill="none" stroke="#c4e8e6" stroke-width="7" stroke-linejoin="round"><circle cx="298" cy="510" r="104"/><circle cx="700" cy="510" r="104"/><path d="M190 506h606l-56-145H584l-104-64H266l-49 146m256-146 16-116h188l63 180m-234-64v164m-211-164v207m445-143 109-57 60 49-113 153"/><path d="M518 205h134v103H504" stroke-width="4"/><path d="M380 297l61 210m45-143h258" stroke-width="3" stroke-dasharray="14 12"/></g>
-  <g fill="#c4e8e6" font-family="monospace"><text x="58" y="72" font-size="23">QUICK COUPLER / SECTION B</text><text x="58" y="106" font-size="16">PROTOTYPE CONTROL DRAWING</text><text x="790" y="650" font-size="16">REV. 08</text></g>
-</svg>

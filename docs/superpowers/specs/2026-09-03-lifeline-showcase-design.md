@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a new `/lifeline` route that demonstrates the interaction vocabulary of [evilrabbit/lifeline](https://github.com/evilrabbit/lifeline) with a rich fictional product history tied to the Volvo loader already used by this project.
+Add a new `/lifeline` route that reproduces the original personal starter included with [evilrabbit/lifeline](https://github.com/evilrabbit/lifeline).
 
 ## Compatibility decision
 
@@ -10,11 +10,11 @@ The upstream registry targets Next.js App Router and Tailwind CSS. This project 
 
 ## Page design
 
-The timeline tells the fictional life of "Project Ironwood," a wheel loader program spanning 1954 to 2026. Desktop uses a full-height horizontal rail controlled by the wheel, trackpad, drag gesture, and arrow keys. Mobile switches to a vertical document timeline.
+The timeline uses the upstream "Your Name" starter data from 1990 to 2026. Desktop uses a full-height horizontal rail controlled by the wheel, trackpad, drag gesture, and arrow keys. Mobile switches to a vertical document timeline.
 
-The visual treatment will faithfully port the upstream Lifeline demo rather than inventing a project-specific theme. It uses a quiet white canvas, Geist-like sans typography, zinc text, a hairline dashed rail, sparse year columns, minimal navigation, blue and pink people markers, and lightly tilted media cards. Dark mode mirrors upstream's black and zinc palette. The generated machine history remains custom.
+The visual treatment faithfully ports the upstream Lifeline demo rather than inventing a project-specific theme. It uses a quiet white canvas, Geist typography, zinc text, a hairline dashed rail, sparse year columns, and minimal navigation.
 
-Every year from 1954 through 2026 receives a marker so the empty time between milestones is visible. Milestone years can carry multiple events, event links, hover media, floating draggable photo cards, badges, organization marks, mentors and collaborators, custom age labels, a current-year marker, and a clickable finale effect.
+Every year from 1990 through 2026 receives a marker so the empty time between milestones is visible. Only the content present in the original starter renders: six event years, the Acme company marker, the legend, and the clickable fireworks finale. The page adds no custom badges, people, media, controls, branding, or copy.
 
 ## Structure
 

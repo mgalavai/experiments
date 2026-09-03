@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-labelledby="title desc">
-  <title id="title">Electric loader charging</title><desc id="desc">A yellow electric loader under cyan work lights at night.</desc>
-  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#07171b"/><stop offset="1" stop-color="#15353b"/></linearGradient><radialGradient id="glow"><stop stop-color="#7effda" stop-opacity=".8"/><stop offset="1" stop-color="#7effda" stop-opacity="0"/></radialGradient></defs>
-  <rect width="1000" height="700" fill="url(#sky)"/><circle cx="790" cy="180" r="250" fill="url(#glow)"/><path d="M0 570L1000 505V700H0z" fill="#0a2429"/>
-  <g fill="#e8b92b" stroke="#10191a" stroke-width="12" stroke-linejoin="round"><circle cx="315" cy="523" r="108" fill="#151d1d"/><circle cx="315" cy="523" r="51"/><circle cx="700" cy="523" r="108" fill="#151d1d"/><circle cx="700" cy="523" r="51"/><path d="M216 510l45-190h221l105 59h151l60 131z"/><path d="M484 319l25-153h161l68 213H585z"/><path d="M738 379l118-58 75 58-133 131z"/></g>
-  <path d="M670 178h190v132" fill="none" stroke="#80ffe0" stroke-width="10"/><path d="M837 285l23 36 23-36" fill="none" stroke="#80ffe0" stroke-width="10"/><g fill="#d9ffef" font-family="monospace"><text x="58" y="70" font-size="22">BAY 04 · 03:17</text><text x="58" y="104" font-size="16">STATE OF CHARGE 78%</text></g>
-</svg>

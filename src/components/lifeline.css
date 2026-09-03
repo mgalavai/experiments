@@ -56,7 +56,7 @@
 }
 
 .lifeline-header::after { top: 63px; }
-.lifeline-footer::before { bottom: 79px; }
+.lifeline-footer::before { bottom: 63px; }
 
 .lifeline-brand {
   color: var(--life-ink);
@@ -89,7 +89,7 @@
 
 .lifeline-stage {
   position: absolute;
-  inset: 64px 0 80px;
+  inset: 64px 0 64px;
   overflow: hidden;
   touch-action: none;
   cursor: ew-resize;
@@ -125,7 +125,7 @@
   z-index: 18;
   top: 50%;
   left: 0;
-  width: 100px;
+  width: 80px;
   height: 96px;
   transform: translateY(-80px);
   display: grid;
@@ -419,7 +419,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 80px;
+  height: 64px;
   display: flex;
   align-items: center;
   width: min(100% - 48px, 976px);

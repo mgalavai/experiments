@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ironwoodLifeline } from './lifelineData'
+import { personalLifeline } from './lifelineData'
 import './lifeline.css'
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value))
@@ -109,11 +109,12 @@ function Marker({ marker, offset, onPreview, onOpen, onCelebrate }) {
                 {event.text}
                 {event.image ? <button type="button" onClick={() => onOpen(event.image)} aria-label={`Open image: ${event.image.alt}`}>▧</button> : null}
                 {event.href ? <> <a href={event.href}>{event.linkLabel}</a></> : null}
+                {event.suffix ?? null}
               </p>
             ))}
           </div>
-          <PeopleRow label={ironwoodLifeline.legend.mentors} people={marker.mentors} />
-          <PeopleRow label={ironwoodLifeline.legend.met} people={marker.met} />
+          <PeopleRow label="Mentors" people={marker.mentors} />
+          <PeopleRow label="Met in person" people={marker.met} />
         </div>
       ) : null}
       {marker.photos?.map((photo, photoIndex) => (
@@ -160,7 +161,6 @@ function Celebration({ run }) {
       {pieces.map((piece) => (
         <i key={piece.id} style={{ left: `${piece.x}%`, '--delay': `${piece.delay}ms`, '--drift': `${piece.drift}px`, '--color': piece.color }} />
       ))}
-      <strong>NEXT SHIFT<br />STARTS NOW</strong>
     </div>
   )
 }
@@ -168,13 +168,12 @@ function Celebration({ run }) {
 export default function LifelinePage() {
   const [progress, setProgress] = useState(1)
   const [intro, setIntro] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [theme, setTheme] = useState('light')
   const [preview, setPreview] = useState(null)
   const [lightbox, setLightbox] = useState(null)
   const [celebration, setCelebration] = useState(0)
   const stageRef = useRef(null)
   const dragRef = useRef(null)
-  const markers = ironwoodLifeline.markers
+  const markers = personalLifeline.markers
 
   useEffect(() => {
     if (!intro) return undefined
@@ -184,7 +183,7 @@ export default function LifelinePage() {
 
   useEffect(() => {
     const previousTitle = document.title
-    document.title = 'Project Ironwood — Lifeline'
+    document.title = 'Lifeline'
     return () => { document.title = previousTitle }
   }, [])
 
@@ -249,14 +248,11 @@ export default function LifelinePage() {
   const travel = `calc(${trackWidth}px - 100vw + 160px)`
 
   return (
-    <main className={`lifeline-page lifeline-page--${theme} ${intro ? 'is-intro' : ''}`}>
+    <main className={`lifeline-page ${intro ? 'is-intro' : ''}`}>
       <header className="lifeline-header" data-site-nav-inner>
         <Link to="/" className="lifeline-brand" data-site-nav-logo aria-label="Back to gallery">
           Lifeline
         </Link>
-        <button type="button" className="lifeline-theme" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')} aria-label={`Use ${theme === 'dark' ? 'light' : 'dark'} theme`}>
-          <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
-        </button>
       </header>
 
       <section
@@ -269,7 +265,7 @@ export default function LifelinePage() {
         onPointerUp={() => { dragRef.current = null }}
         onPointerCancel={() => { dragRef.current = null }}
         tabIndex="0"
-        aria-label={`${ironwoodLifeline.name} timeline. Use arrow keys to move through time.`}
+        aria-label={`${personalLifeline.name} timeline. Use arrow keys to move through time.`}
       >
         <div className="lifeline-labels" aria-hidden="true"><span>AGE</span><span>YEARS</span></div>
         <div
