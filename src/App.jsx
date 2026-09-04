@@ -71,6 +71,7 @@ function TopNav() {
 
 function AppShell() {
   const location = useLocation()
+  const isFieldTestRoute = location.pathname === '/field-test'
 
   useEffect(() => {
     const routeClass = `route-${location.pathname.replace(/\//g, '-') || 'root'}`
@@ -85,7 +86,7 @@ function AppShell() {
 
   return (
     <>
-      <TopNav />
+      {!isFieldTestRoute && <TopNav />}
       <Routes>
         <Route path="/" element={<Navigate to={views[0].path} replace />} />
         {views.map((view) => (
