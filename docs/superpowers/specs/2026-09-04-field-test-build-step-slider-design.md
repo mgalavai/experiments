@@ -8,6 +8,8 @@ Replace the binary exploded state with a manual assembly-step control based on t
 
 The slider ranges from step 0 through the highest step found in the loaded model, currently 159. The highest step displays the complete model. Lowering the value moves every physical part whose `buildingStep` is greater than the selected value to its existing exploded target. Raising the value restores those parts to their exact authored transforms.
 
+The four `42081 - wheel1.ldr` and `42081 - wheel2.ldr` model nodes are exceptions to part-level movement. Treat each as one rigid wheel assembly, exclude its physical descendants from independent movement, and move the complete wheel 2.4 scene units outward along its axle. Use the wheel model node's `buildingStep` for the slider threshold. This keeps the tire, rim, hub, tread, and wheel attachments together while creating more clearance from the chassis.
+
 The existing primary button remains as a shortcut. It jumps to step 0 when the model is complete and returns to the highest step from any partially exploded state. The label switches between `Explode` and `Assemble` accordingly.
 
 ## Layout
@@ -20,4 +22,4 @@ Slider changes update part transforms and render one frame. They do not start a 
 
 ## Verification
 
-Check steps 159, an intermediate value, and 0. Confirm that the visible part sequence follows `buildingStep`, wheels remain complete, no part crosses the floor, returning to 159 restores the model, and the nav and left header are absent on desktop and mobile layouts.
+Check steps 159, an intermediate value, and 0. Confirm that the visible part sequence follows `buildingStep`, each wheel moves as one complete assembly along its axle, wheel descendants retain their relative transforms, no part crosses the floor, returning to 159 restores the model, and the nav and left header are absent on desktop and mobile layouts.

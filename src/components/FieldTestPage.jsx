@@ -5,6 +5,17 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import './field-test.css'
 
+const WHEEL_SUBMODEL_PATTERN = /^42081 - wheel[12]\.ldr$/i
+
+function isPhysicalPart(node) {
+  return node.userData.type === 'Part' || node.userData.type === 'Unofficial_Part'
+}
+
+function isWheelAssembly(node) {
+  const fileName = node.userData.fileName ?? node.name
+  return node.userData.type === 'Model' && WHEEL_SUBMODEL_PATTERN.test(fileName)
+}
+
 function Scene({ lightsOn, assemblyStep, resetVersion, onReady, onError }) {
   const mount = useRef(null)
   const lights = useRef(null)
@@ -78,19 +89,25 @@ function Scene({ lightsOn, assemblyStep, resetVersion, onReady, onError }) {
       const modelCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
       const parts = []
       model.traverse((child) => {
-        const isPhysicalPart = child.userData.type === 'Part' || child.userData.type === 'Unofficial_Part'
-        if (!isPhysicalPart || !child.parent) return
+        const wheelAssembly = isWheelAssembly(child)
+        if ((!isPhysicalPart(child) && !wheelAssembly) || !child.parent) return
         let ancestor = child.parent
         while (ancestor && ancestor !== model) {
-          if (ancestor.userData.type === 'Part' || ancestor.userData.type === 'Unofficial_Part') return
+          if (isPhysicalPart(ancestor) || isWheelAssembly(ancestor)) return
           ancestor = ancestor.parent
         }
         const partBounds = new THREE.Box3().setFromObject(child)
         const partCenter = partBounds.getCenter(new THREE.Vector3())
-        const direction = partCenter.sub(modelCenter)
-        direction.y += Math.max(0.25, direction.length() * 0.14)
-        direction.normalize()
-        const offset = direction.multiplyScalar(1.35)
+        let offset
+        if (wheelAssembly) {
+          const axleDirection = Math.sign(partCenter.x - modelCenter.x) || 1
+          offset = new THREE.Vector3(axleDirection * 2.4, 0, 0)
+        } else {
+          const direction = partCenter.sub(modelCenter)
+          direction.y += Math.max(0.25, direction.length() * 0.14)
+          direction.normalize()
+          offset = direction.multiplyScalar(1.35)
+        }
         const minimumExplodedY = floor.position.y + 0.04
         if (partBounds.min.y + offset.y < minimumExplodedY) {
           offset.y += minimumExplodedY - (partBounds.min.y + offset.y)
