@@ -16,6 +16,15 @@ function isWheelAssembly(node) {
   return node.userData.type === 'Model' && WHEEL_SUBMODEL_PATTERN.test(fileName)
 }
 
+function findWheelAssembly(node, model) {
+  let ancestor = node.parent
+  while (ancestor && ancestor !== model) {
+    if (isWheelAssembly(ancestor)) return ancestor
+    ancestor = ancestor.parent
+  }
+  return null
+}
+
 function Scene({ lightsOn, assemblyStep, resetVersion, onReady, onError }) {
   const mount = useRef(null)
   const lights = useRef(null)
@@ -88,20 +97,27 @@ function Scene({ lightsOn, assemblyStep, resetVersion, onReady, onError }) {
       model.updateMatrixWorld(true)
       const modelCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
       const parts = []
+      const wheelAxleDirections = new Map()
       model.traverse((child) => {
-        const wheelAssembly = isWheelAssembly(child)
-        if ((!isPhysicalPart(child) && !wheelAssembly) || !child.parent) return
+        if (!isPhysicalPart(child) || !child.parent) return
+        const wheelAssembly = findWheelAssembly(child, model)
         let ancestor = child.parent
         while (ancestor && ancestor !== model) {
-          if (isPhysicalPart(ancestor) || isWheelAssembly(ancestor)) return
+          if (isPhysicalPart(ancestor)) return
           ancestor = ancestor.parent
         }
         const partBounds = new THREE.Box3().setFromObject(child)
         const partCenter = partBounds.getCenter(new THREE.Vector3())
         let offset
         if (wheelAssembly) {
-          const axleDirection = Math.sign(partCenter.x - modelCenter.x) || 1
-          offset = new THREE.Vector3(axleDirection * 2.4, 0, 0)
+          if (!wheelAxleDirections.has(wheelAssembly)) {
+            const wheelCenter = new THREE.Box3().setFromObject(wheelAssembly).getCenter(new THREE.Vector3())
+            wheelAxleDirections.set(wheelAssembly, Math.sign(wheelCenter.x - modelCenter.x) || 1)
+          }
+          const axleDirection = wheelAxleDirections.get(wheelAssembly)
+          const isYellowWheelPart = child.userData.colorCode === '14'
+          const axleDistance = isYellowWheelPart ? 3.8 : 2.4
+          offset = new THREE.Vector3(axleDirection * axleDistance, 0, 0)
         } else {
           const direction = partCenter.sub(modelCenter)
           direction.y += Math.max(0.25, direction.length() * 0.14)
