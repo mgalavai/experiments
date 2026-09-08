@@ -1,5 +1,5 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import DigitalKeyPage from './components/DigitalKeyPage'
 import FridayPlannerPage from './components/FridayPlannerPage'
@@ -8,6 +8,8 @@ import TEDMXFieldControllerPage from './components/TEDMXFieldControllerPage'
 import LogoPage from './components/LogoPage'
 import FieldTestPage from './components/FieldTestPage'
 import LifelinePage from './components/LifelinePage'
+
+const RealityTearPage = lazy(() => import('./components/RealityTearPage'))
 
 const views = [
   {
@@ -45,6 +47,15 @@ const views = [
     label: 'Lifeline',
     element: <LifelinePage />,
   },
+  {
+    path: '/reality-tear',
+    label: 'Reality Tear',
+    element: (
+      <Suspense fallback={<div style={{ background: '#070d09', color: '#b9ff7a', minHeight: '100dvh', display: 'grid', placeItems: 'center' }}>Opening reality…</div>}>
+        <RealityTearPage />
+      </Suspense>
+    ),
+  },
 ]
 
 function TopNav() {
@@ -71,7 +82,7 @@ function TopNav() {
 
 function AppShell() {
   const location = useLocation()
-  const isFieldTestRoute = location.pathname === '/field-test'
+  const isImmersiveRoute = location.pathname === '/field-test' || location.pathname === '/reality-tear'
 
   useEffect(() => {
     const routeClass = `route-${location.pathname.replace(/\//g, '-') || 'root'}`
@@ -86,14 +97,14 @@ function AppShell() {
 
   return (
     <>
-      {!isFieldTestRoute && <TopNav />}
+      {!isImmersiveRoute && <TopNav />}
       <Routes>
         <Route path="/" element={<Navigate to={views[0].path} replace />} />
         {views.map((view) => (
           <Route key={view.path} path={view.path} element={view.element} />
         ))}
       </Routes>
-      {import.meta.env.DEV && <Agentation />}
+      {import.meta.env.DEV && location.pathname !== '/reality-tear' && <Agentation />}
     </>
   )
 }

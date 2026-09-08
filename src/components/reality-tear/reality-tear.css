@@ -1,0 +1,70 @@
+body.route--reality-tear { background: #070d09; overflow: hidden; }
+.reality-tear { position: fixed; inset: 0; overflow: hidden; height: 100dvh; background: #070d09; color: #f1f3e9; font-family: 'Geist Variable', 'Helvetica Neue', sans-serif; --rt-green: #b9ff7a; }
+.rt-canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.rt-canvas:active { cursor: grabbing; }
+.rt-video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.rt-vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgb(0 8 3 / 35%), transparent 20%, transparent 55%, rgb(0 8 3 / 70%)); }
+.rt-header { position: absolute; top: 0; left: 0; right: 0; padding: max(28px, env(safe-area-inset-top)) 36px 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.rt-wordmark { font-size: 13px; font-weight: 650; letter-spacing: .11em; color: #f1f3e9; text-decoration: none; display: flex; align-items: center; gap: 9px; pointer-events: auto; }
+.rt-wordmark-light { color: #c1c8be; font-weight: 400; }
+.rt-symbol { font-size: 25px; line-height: 1; color: var(--rt-green); margin-right: 3px; }
+.rt-mode { display: flex; align-items: center; gap: 8px; font: 10px monospace; letter-spacing: .09em; }
+.rt-mode i { width: 5px; height: 5px; border-radius: 50%; background: var(--rt-green); box-shadow: 0 0 8px #a9ff7470; }
+.rt-intro { position: absolute; left: 7.5%; top: 24%; pointer-events: none; animation: rt-enter 750ms both; }
+.rt-eyebrow { font: 10px monospace; letter-spacing: .18em; color: var(--rt-green); margin-bottom: 26px; }
+.rt-intro h1 { font-size: clamp(60px, 7.5vw, 120px); line-height: .98; letter-spacing: -.07em; font-weight: 500; }
+.rt-intro h1 em { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.065em; }
+.rt-description { color: #c7cfc4; font-size: 16px; line-height: 1.7; margin-top: 28px; }
+.rt-start { position: absolute; bottom: max(100px, calc(env(safe-area-inset-bottom) + 70px)); left: 7.5%; width: 320px; animation: rt-enter 900ms both; }
+.reality-tear button { border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.reality-tear button:focus-visible, .rt-wordmark:focus-visible { outline: 2px solid var(--rt-green); outline-offset: 5px; }
+.reality-tear button:disabled { opacity: .5; cursor: wait; }
+.reality-tear .rt-primary { background: var(--rt-green); color: #14220d; border-radius: 4px; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 20px; width: 100%; font-size: 14px; font-weight: 600; transition: background .18s, transform .18s; }
+.rt-primary svg:last-child { margin-left: auto; }
+.rt-primary:hover { background: #ceffa3; transform: translateY(-2px); }
+.reality-tear .rt-preview-button { display: flex; width: 100%; align-items: center; justify-content: center; gap: 14px; background: transparent; color: #e0e5dc; min-height: 48px; font-size: 12px; }
+.rt-preview-button:hover { color: var(--rt-green); }
+.rt-privacy { color: #a9b4a5; text-align: center; font-size: 10px; margin-top: 10px; }
+.rt-intro-footer { position: absolute; bottom: max(26px, env(safe-area-inset-bottom)); left: 36px; right: 36px; display: flex; justify-content: space-between; font: 9px monospace; letter-spacing: .12em; color: #acb9a8; }
+.rt-error { font-size: 13px; line-height: 1.5; margin-bottom: 15px; color: #ffdcbd; max-width: 380px; }
+.rt-live-footer { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.rt-instruction { color: #fff; font-size: 14px; line-height: 1.5; text-align: center; text-shadow: 0 2px 12px #000; max-width: 390px; }
+.rt-tip { color: #ced6c9; font-size: 11px; text-align: center; margin-top: 7px; text-shadow: 0 2px 9px #000; }
+.rt-controls { display: flex; gap: 4px; margin-top: 20px; background: rgb(8 16 10 / 86%); border: 1px solid #d7edc925; border-radius: 8px; padding: 4px; pointer-events: auto; backdrop-filter: blur(16px); }
+.reality-tear .rt-controls button { background: transparent; color: #e8efdf; min-height: 48px; padding: 0 17px; border-radius: 5px; display: flex; align-items: center; gap: 9px; font-size: 12px; }
+.rt-controls button:hover { background: #c6ffa315; }
+.rt-grip { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; will-change: transform; }
+.rt-grip span { position: absolute; width: 38px; height: 38px; border: 1px solid #fff9; border-radius: 50%; transform: translate(-50%, -50%); transition: width .15s, height .15s, border-color .15s; }
+.rt-grip i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: white; transform: translate(-50%, -50%); }
+.rt-grip[data-pinched='true'] span { width: 24px; height: 24px; border-color: var(--rt-green); box-shadow: 0 0 16px #aaff6a50; }
+.rt-grip[data-pinched='true'] i { background: var(--rt-green); }
+@keyframes rt-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  .rt-header { padding: max(22px, env(safe-area-inset-top)) 22px 16px; }
+  .rt-wordmark { font-size: 10px; gap: 6px; }
+  .rt-mode { font-size: 8px; gap: 5px; }
+  .rt-intro { left: 26px; right: 24px; top: 21%; }
+  .rt-intro h1 { font-size: clamp(54px, 14.5vw, 82px); }
+  .rt-eyebrow { font-size: 8px; margin-bottom: 22px; letter-spacing: .12em; }
+  .rt-description { font-size: 13px; margin-top: 22px; }
+  .rt-start { left: 26px; right: 26px; width: auto; bottom: max(70px, calc(env(safe-area-inset-bottom) + 48px)); }
+  .rt-intro-footer { left: 24px; right: 24px; font-size: 7px; bottom: max(20px, env(safe-area-inset-bottom)); }
+  .rt-instruction { font-size: 13px; }
+  .rt-tip { font-size: 10px; }
+  .reality-tear .rt-controls button { padding: 0 13px; }
+}
+@media (max-height: 620px) {
+  .rt-intro { top: 20%; }
+  .rt-intro h1 { font-size: 52px; }
+  .rt-eyebrow { margin-bottom: 12px; }
+  .rt-description { margin-top: 14px; font-size: 12px; }
+  .rt-start { bottom: 55px; }
+  .rt-privacy { margin-top: 0; }
+}
+@media (max-height: 500px) and (min-width: 600px) {
+  .rt-start { left: auto; right: 5%; bottom: 70px; width: 280px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rt-intro, .rt-start { animation: none; }
+  .reality-tear button { transition: none; }
+}
