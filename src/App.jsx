@@ -10,6 +10,7 @@ import FieldTestPage from './components/FieldTestPage'
 import LifelinePage from './components/LifelinePage'
 
 const RealityTearPage = lazy(() => import('./components/RealityTearPage'))
+const L20ConfiguratorPage = lazy(() => import('./components/L20ConfiguratorPage'))
 
 const views = [
   {
@@ -56,6 +57,15 @@ const views = [
       </Suspense>
     ),
   },
+  {
+    path: '/l20-configurator',
+    label: 'L20 Configurator',
+    element: (
+      <Suspense fallback={<div style={{ background: '#0e1013', minHeight: '100dvh' }} />}>
+        <L20ConfiguratorPage />
+      </Suspense>
+    ),
+  },
 ]
 
 function TopNav() {
@@ -65,10 +75,11 @@ function TopNav() {
   const isPlannerRoute = location.pathname === '/friday-planner'
   const isLogoRoute = location.pathname === '/logo'
   const isLifelineRoute = location.pathname === '/lifeline'
+  const isL20Route = location.pathname === '/l20-configurator'
 
   return (
     <nav
-      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isLifelineRoute ? 'app-nav--lifeline' : ''}`}
+      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isLifelineRoute ? 'app-nav--lifeline' : ''} ${isL20Route ? 'app-nav--l20' : ''}`}
       aria-label="Views"
     >
       {views.map((view) => (

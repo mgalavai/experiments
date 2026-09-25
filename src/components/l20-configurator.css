@@ -1,0 +1,49 @@
+.l20 {
+  position: fixed;
+  inset: 0;
+  background: #0e1013;
+}
+
+.l20__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: none;
+}
+
+.l20__status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #9aa1a9;
+  font: 500 0.8rem/1 system-ui, sans-serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: l20-fade 300ms ease-out both;
+}
+
+.l20__status--error {
+  color: #edb621;
+}
+
+@keyframes l20-fade {
+  from { opacity: 0; }
+}
+
+.app-nav--l20 {
+  background: rgb(14 16 19 / 70%);
+  border-color: rgb(255 255 255 / 10%);
+}
+
+.app-nav--l20 a {
+  color: rgb(255 255 255 / 70%);
+}
+
+.app-nav--l20 a:hover,
+.app-nav--l20 a[aria-current='page'] {
+  color: #0e1013;
+  background: #edb621;
+}
