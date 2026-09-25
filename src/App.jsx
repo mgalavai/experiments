@@ -75,11 +75,10 @@ function TopNav() {
   const isPlannerRoute = location.pathname === '/friday-planner'
   const isLogoRoute = location.pathname === '/logo'
   const isLifelineRoute = location.pathname === '/lifeline'
-  const isL20Route = location.pathname === '/l20-configurator'
 
   return (
     <nav
-      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isLifelineRoute ? 'app-nav--lifeline' : ''} ${isL20Route ? 'app-nav--l20' : ''}`}
+      className={`app-nav ${isTelemetryRoute ? 'app-nav--telemetry' : ''} ${isDigitalKeyRoute ? 'app-nav--digital-key' : ''} ${isPlannerRoute ? 'app-nav--planner' : ''} ${isLogoRoute ? 'app-nav--logo' : ''} ${isLifelineRoute ? 'app-nav--lifeline' : ''}`}
       aria-label="Views"
     >
       {views.map((view) => (
@@ -93,7 +92,7 @@ function TopNav() {
 
 function AppShell() {
   const location = useLocation()
-  const isImmersiveRoute = location.pathname === '/field-test' || location.pathname === '/reality-tear'
+  const isImmersiveRoute = location.pathname === '/field-test' || location.pathname === '/reality-tear' || location.pathname === '/l20-configurator'
 
   useEffect(() => {
     const routeClass = `route-${location.pathname.replace(/\//g, '-') || 'root'}`
