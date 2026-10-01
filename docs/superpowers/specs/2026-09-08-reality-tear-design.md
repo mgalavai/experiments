@@ -18,3 +18,11 @@ Implementation: independent gesture mapping, Three.js renderer, classic bundled 
 - Camera-denied path showed retry/settings guidance and preview option.
 - A prerecorded reference clip supplied through Chrome's fake camera exercised the real local MediaPipe worker. It detected two pinching hands, opened the live-textured tear, and stopped the video stream on exit. This is fixture validation, not physical-phone verification.
 - Existing main bundle size warning remains; the new route is lazy-loaded and the hand model/runtime load only when opening the camera.
+
+## Rebuilt on a cloth simulation (October 1, 2026)
+
+The procedural two-halves tear is replaced by the tearable cloth from the page designer's tear easter egg (`reality-tear/cloth.js`). The live camera is a sheet of ~7,000 particles held on all four screen edges. Each pinching hand grabs the sheet where its thumb and index meet; pulling stretches it, pulling harder rips it, and two hands pulling apart tear it open between them. Torn flaps droop and curl towards the viewer with their dark, green-tinted backs showing; torn edges glow acid green; lifted paper casts a shadow; pieces cut free fall away into the glyph rain. Releasing leaves the tear as it is; a new grab tears further; Reset gives a fresh sheet.
+
+`HandGrips` (in `gesture.js`) replaces the width-based `TearGesture`: hands keep their slot across detections (nearest match), pinches keep their hysteresis, and grips ease toward each detection every frame so the sheet moves smoothly at ~15 Hz detection. Pointer and touch: a drag grabs (several fingers grab separately), shift- or right-drag cuts. The intro loops two unseen hands ripping the surface.
+
+Validated with Node tests (cloth and hand grips), lint, a production build, and headless Chrome: the intro loop, the fake camera as a live texture with a scripted tracking worker standing in for MediaPipe (two hands pinch, pull apart, release), pointer tearing and cutting, Reset and Stop; 60 fps, no console errors. MediaPipe itself is unchanged; real hands on a phone still need device validation.

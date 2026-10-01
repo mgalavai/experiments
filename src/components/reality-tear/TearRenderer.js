@@ -1,102 +1,106 @@
 import * as THREE from 'three'
+import { Cloth } from './cloth'
 import { clamp } from './gesture'
 
-const COLS = 34
-const ROWS = 100
 const glyphs = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ012345789ZX<>:='
+const STEP = 1 / 60
+// About 7,000 particles at most: smooth tears, a few ms per step even on a phone.
+const MAX_PARTICLES = 7000
 
-function makeSheet(side) {
-  const positions = new Float32Array((COLS + 1) * (ROWS + 1) * 3)
-  const uvs = new Float32Array((COLS + 1) * (ROWS + 1) * 2)
-  const indices = []
-  for (let y = 0; y < ROWS; y++) {
-    for (let x = 0; x < COLS; x++) {
-      const a = y * (COLS + 1) + x, b = a + COLS + 1
-      if (side === 1) indices.push(a, b, a + 1, b, b + 1, a + 1)
-      else indices.push(a, a + 1, b, b, a + 1, b + 1)
+// The sheet is laid out in screen pixels (y down, z towards the viewer) and
+// projected here with a mild perspective, so a lifted flap grows a little.
+const sheetVertex = `
+  attribute float loose;
+  uniform vec2 view;
+  uniform float shadow;
+  varying vec2 vUv; varying vec3 vNormal; varying float vLoose; varying float vHeight;
+  const float FOCAL = 1600.0;
+  void main() {
+    vec3 p = position;
+    vHeight = max(p.z, 0.0);
+    if (shadow > .5) {
+      // Shadows fall down and right, further the higher the paper lifts, and sit
+      // just above the flat sheet so they land on it but hide behind lifted parts.
+      p.xy += vec2(2., 4.) + vHeight * vec2(.3, .5);
+      p.z = 2.;
     }
+    vec2 c = view * .5;
+    float z = clamp(p.z, -FOCAL * .6, FOCAL * .6);
+    vec2 q = c + (p.xy - c) * (FOCAL / (FOCAL - z));
+    gl_Position = vec4(q.x / view.x * 2. - 1., 1. - q.y / view.y * 2., -z / FOCAL, 1.);
+    vUv = uv; vNormal = normal; vLoose = loose;
   }
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage))
-  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2).setUsage(THREE.DynamicDrawUsage))
-  geometry.setIndex(indices)
-  return geometry
-}
+`
 
 export class TearRenderer {
   constructor(canvas) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' })
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, stencil: true, powerPreference: 'high-performance' })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7))
     this.renderer.setClearColor(0x010503)
     this.scene = new THREE.Scene()
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20)
     this.camera.position.z = 5
-    this.width = 0
-    this.center = { x: 0.5, y: 0.5 }
+    this.carry = 0
     this.rain = document.createElement('canvas')
     this.rain.width = 768
     this.rain.height = 1024
     this.rainCtx = this.rain.getContext('2d', { alpha: false })
     this.rainTexture = new THREE.CanvasTexture(this.rain)
-    this.rainTexture.colorSpace = THREE.SRGBColorSpace
-    this.rainTexture.minFilter = THREE.LinearFilter
-    this.streams = Array.from({ length: 94 }, (_, i) => ({
-      x: ((i * 0.61803398875) % 1) * 768,
-      y: Math.random() * 1800,
-      speed: 40 + Math.random() * 100,
-      length: 8 + Math.floor(Math.random() * 20),
-      size: 10 + (i % 3) * 5,
-      depth: 0.25 + (i % 3) * 0.32,
-    }))
-    this.back = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: this.rainTexture }))
-    this.back.position.z = -0.2
+    // What lies behind the sheet: always drawn first, never in front.
+    this.back = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: this.rainTexture, depthTest: false, depthWrite: false }))
+    this.back.renderOrder = 0
     this.scene.add(this.back)
     this.preview = this.makePreview()
     this.previewTexture = new THREE.CanvasTexture(this.preview)
     this.previewTexture.colorSpace = THREE.SRGBColorSpace
+    this.view = new THREE.Vector2(1, 1)
     this.material = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       uniforms: {
         image: { value: this.previewTexture },
         crop: { value: new THREE.Vector2(1, 1) },
         mirror: { value: false },
-        opening: { value: 0 },
+        view: { value: this.view },
+        shadow: { value: 0 },
       },
-      vertexShader: `
-        varying vec2 vUv; varying vec3 vPosition; varying float vLift;
-        void main() {
-          vUv = uv;
-          vec4 p = modelViewMatrix * vec4(position, 1.0);
-          vPosition = p.xyz; vLift = position.z;
-          gl_Position = projectionMatrix * p;
-        }
-      `,
+      vertexShader: sheetVertex,
       fragmentShader: `
-        uniform sampler2D image; uniform vec2 crop; uniform bool mirror; uniform float opening;
-        varying vec2 vUv; varying vec3 vPosition; varying float vLift;
+        uniform sampler2D image; uniform vec2 crop; uniform bool mirror;
+        varying vec2 vUv; varying vec3 vNormal; varying float vLoose;
+        const vec3 LIGHT = vec3(-.35, -.55, 1.);
         void main() {
-          vec2 uv = (vUv - .5) * crop + .5;
+          vec2 uv = (vec2(vUv.x, 1. - vUv.y) - .5) * crop + .5;
           if (mirror) uv.x = 1. - uv.x;
           vec3 color = texture2D(image, uv).rgb;
-          vec3 n = normalize(cross(dFdx(vPosition), dFdy(vPosition)));
-          float bend = 1. - abs(n.z);
-          float light = .65 + .35 * abs(dot(n, normalize(vec3(-.3, .7, 1.))));
-          color *= mix(1., light, smoothstep(0., .02, vLift));
-          if (!gl_FrontFacing) color = color * .32 + vec3(.1, .13, .11);
-          color += vec3(.15, .65, .25) * bend * min(opening * 4., 1.) * .3;
-          color += pow(bend, 5.) * .14;
+          vec3 n = normalize(vNormal);
+          // The back of reality is dark and faintly green.
+          if (!gl_FrontFacing) { n = -n; color = color * .32 + vec3(.1, .13, .11); }
+          vec3 l = normalize(LIGHT);
+          // Lying flat reads exactly as the camera sees it; folds catch or lose the light.
+          color *= clamp(.7 + .3 * max(dot(n, l), 0.) / l.z, .5, 1.08);
+          // Torn edges glow acid green.
+          color += vec3(.15, .65, .25) * smoothstep(0., 2.5, vLoose) * .6;
           gl_FragColor = vec4(color, 1.);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }
       `,
     })
-    this.sheets = [-1, 1].map(side => {
-      const geometry = makeSheet(side)
-      const mesh = new THREE.Mesh(geometry, this.material)
-      mesh.frustumCulled = false
-      this.scene.add(mesh)
-      return { side, geometry }
+    this.shadowMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      // Each pixel darkens once, however many flaps overlap it.
+      stencilWrite: true,
+      stencilFunc: THREE.EqualStencilFunc,
+      stencilRef: 0,
+      stencilZPass: THREE.IncrementStencilOp,
+      uniforms: { view: { value: this.view }, shadow: { value: 1 } },
+      vertexShader: sheetVertex,
+      fragmentShader: `
+        varying float vHeight;
+        void main() { gl_FragColor = vec4(0., 0., 0., .3 * smoothstep(4., 48., vHeight)); }
+      `,
     })
     this.resize()
   }
@@ -134,7 +138,10 @@ export class TearRenderer {
 
   resize() {
     const { clientWidth: w, clientHeight: h } = this.renderer.domElement
-    this.aspect = w / Math.max(1, h)
+    this.w = Math.max(1, w)
+    this.h = Math.max(1, h)
+    this.aspect = this.w / this.h
+    this.view.set(this.w, this.h)
     this.renderer.setSize(w, h, false)
     this.camera.left = -this.aspect; this.camera.right = this.aspect
     this.camera.updateProjectionMatrix()
@@ -157,6 +164,92 @@ export class TearRenderer {
       depth: 0.25 + (i % 3) * 0.32,
     }))
     this.updateCrop()
+    // A new size is a new sheet.
+    this.reset()
+  }
+
+  /** A fresh, whole sheet over the whole view, held on all four edges. */
+  reset() {
+    const cell = clamp(Math.sqrt((this.w * this.h) / MAX_PARTICLES), 9, 24)
+    const cols = Math.max(8, Math.round(this.w / cell))
+    const rows = Math.max(8, Math.round(this.h / cell))
+    this.cloth = new Cloth({ x: 0, y: 0, width: this.w, height: this.h, cols, rows, pins: { top: true, right: true, bottom: true, left: true } })
+    this.grabRadius = clamp(Math.min(this.w, this.h) * 0.14, 50, 160)
+    this.normals = new Float32Array(this.cloth.count * 3)
+    this.looseness = new Float32Array(this.cloth.count)
+    this.looseVersion = -1
+    this.indices = new Uint16Array(cols * rows * 6)
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(this.cloth.pos, 3).setUsage(THREE.DynamicDrawUsage))
+    geometry.setAttribute('normal', new THREE.BufferAttribute(this.normals, 3).setUsage(THREE.DynamicDrawUsage))
+    geometry.setAttribute('uv', new THREE.BufferAttribute(this.cloth.uv, 2))
+    geometry.setAttribute('loose', new THREE.BufferAttribute(this.looseness, 1).setUsage(THREE.DynamicDrawUsage))
+    geometry.setIndex(new THREE.BufferAttribute(this.indices, 1).setUsage(THREE.DynamicDrawUsage))
+    if (this.sheet) {
+      this.scene.remove(this.sheet, this.shadows)
+      this.sheet.geometry.dispose()
+    }
+    this.sheet = new THREE.Mesh(geometry, this.material)
+    this.shadows = new THREE.Mesh(geometry, this.shadowMaterial)
+    for (const [mesh, order] of [[this.sheet, 1], [this.shadows, 2]]) {
+      mesh.frustumCulled = false
+      mesh.renderOrder = order
+      this.scene.add(mesh)
+    }
+    this.updateSheet()
+  }
+
+  /** Takes hold of the sheet at a point in CSS px; returns whether it caught anything. */
+  grab(key, x, y) {
+    return this.cloth.grab(key, x, y, this.grabRadius)
+  }
+
+  moveGrab(key, x, y) {
+    this.cloth.moveGrab(key, x, y)
+  }
+
+  release(key) {
+    this.cloth.release(key)
+  }
+
+  isHeld(key) {
+    return this.cloth.isHeld(key)
+  }
+
+  cut(x0, y0, x1, y1) {
+    this.cloth.cut(x0, y0, x1, y1, 7)
+  }
+
+  /** How much of the sheet has torn, 0..1. */
+  get torn() {
+    return this.cloth.torn
+  }
+
+  /**
+   * The intro's loop: two unseen hands take hold of the sheet, pull it apart until
+   * it rips, let go, and the sheet heals for the next round.
+   */
+  playIntro(time) {
+    const length = 7.5
+    const phase = (time % length) / length
+    const round = Math.floor(time / length)
+    if (round !== this.introRound) {
+      this.introRound = round
+      this.reset()
+    }
+    const cx = this.w * .62, cy = this.h * .46, start = Math.min(this.w, this.h) * .05
+    const pull = clamp((phase - .08) / .42, 0, 1)
+    const reach = start + pull * pull * Math.min(this.w, this.h) * .32
+    if (phase > .08 && phase < .5) {
+      if (!this.isHeld('intro-a')) {
+        this.grab('intro-a', cx - start, cy)
+        this.grab('intro-b', cx + start, cy + 10)
+      }
+      this.moveGrab('intro-a', cx - reach, cy - reach * .12)
+      this.moveGrab('intro-b', cx + reach, cy + 10 + reach * .1)
+    } else if (this.isHeld('intro-a')) {
+      this.release('intro-a'); this.release('intro-b')
+    }
   }
 
   setVideo(video, mirror) {
@@ -197,56 +290,41 @@ export class TearRenderer {
     this.rainTexture.needsUpdate = true
   }
 
-  render(time, delta, targetWidth, center) {
-    const smooth = 1 - Math.exp(-delta * 13)
-    this.width += (targetWidth - this.width) * smooth
-    if (targetWidth === 0 && this.width < .002) this.width = 0
-    this.center.x += (center.x - this.center.x) * smooth
-    this.center.y += (center.y - this.center.y) * smooth
-    const opening = this.width
-    this.material.uniforms.opening.value = opening
-    if (!this.lastRain || time - this.lastRain > 1 / 30) {
-      this.drawRain(time); this.lastRain = time
+  /** Copies the simulation into the mesh. */
+  updateSheet() {
+    const geometry = this.sheet.geometry
+    const count = this.cloth.writeIndices(this.indices)
+    geometry.setDrawRange(0, count)
+    geometry.index.needsUpdate = true
+    this.cloth.writeNormals(this.normals)
+    geometry.attributes.position.needsUpdate = true
+    geometry.attributes.normal.needsUpdate = true
+    if (this.looseVersion !== this.cloth.version) {
+      this.looseVersion = this.cloth.version
+      this.looseness.set(this.cloth.loose)
+      geometry.attributes.loose.needsUpdate = true
     }
-    const cx = (this.center.x * 2 - 1) * this.aspect
-    const cy = 1 - this.center.y * 2
-    const height = Math.min(1.8, .3 + opening * 2.5)
-    for (const { side, geometry } of this.sheets) {
-      const p = geometry.attributes.position.array
-      const uv = geometry.attributes.uv.array
-      for (let row = 0; row <= ROWS; row++) {
-        const y = 1 - row / ROWS * 2
-        const dy = (y - cy) / height
-        const profile = Math.pow(Math.max(0, 1 - dy * dy), .72)
-        const jag = (Math.sin(row * 2.17) * .007 + Math.sin(row * 5.71) * .004) * Math.min(opening * 20, 1)
-        const seam = cx + Math.sin(y * 5 + cy) * .032 * profile * Math.min(opening * 10, 1)
-        const gap = Math.min(opening * this.aspect * profile, Math.abs(side * this.aspect - seam) * .92)
-        const boundary = side * this.aspect
-        const span = Math.max(.01, Math.abs(boundary - seam))
-        for (let col = 0; col <= COLS; col++) {
-          const t = col / COLS
-          const i = row * (COLS + 1) + col
-          const distance = t * span
-          const foldSize = Math.min(.3, opening * .8) * profile
-          const influence = Math.exp(-distance / Math.max(.025, foldSize))
-          const curl = Math.sin(Math.min(1, distance / Math.max(.01, foldSize)) * Math.PI)
-          const displacement = (gap + jag * profile) * Math.pow(1 - t, 2.6)
-          p[i * 3] = seam + side * (distance + displacement + curl * foldSize * .45 * influence)
-          p[i * 3 + 1] = y + Math.sin(t * 9 + y * 13) * foldSize * .07 * influence
-          p[i * 3 + 2] = foldSize * influence * (0.25 + curl * 1.8)
-          uv[i * 2] = clamp((seam + side * distance) / (this.aspect * 2) + .5, 0, 1)
-          uv[i * 2 + 1] = 1 - row / ROWS
-        }
-      }
-      geometry.attributes.position.needsUpdate = true
-      geometry.attributes.uv.needsUpdate = true
+  }
+
+  render(time, delta) {
+    // Fixed steps, so the paper behaves the same at any frame rate.
+    this.carry = Math.min(this.carry + delta, STEP * 4)
+    while (this.carry >= STEP) {
+      this.cloth.step()
+      this.carry -= STEP
+    }
+    this.updateSheet()
+    // Only worth drawing once something has torn; until then the sheet hides it.
+    if (this.cloth.brokenCount && (!this.lastRain || time - this.lastRain > 1 / 30)) {
+      this.drawRain(time); this.lastRain = time
     }
     this.renderer.render(this.scene, this.camera)
   }
 
   dispose() {
-    this.sheets.forEach(s => s.geometry.dispose())
-    this.material.dispose(); this.videoTexture?.dispose(); this.previewTexture.dispose()
+    this.sheet.geometry.dispose()
+    this.material.dispose(); this.shadowMaterial.dispose()
+    this.videoTexture?.dispose(); this.previewTexture.dispose()
     this.rainTexture.dispose(); this.back.geometry.dispose(); this.back.material.dispose()
     this.renderer.dispose()
   }

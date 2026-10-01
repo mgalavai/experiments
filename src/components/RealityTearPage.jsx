@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { TearRenderer } from './reality-tear/TearRenderer'
-import { cameraPoint, pinchRatio, TearGesture, clamp } from './reality-tear/gesture'
+import { cameraPoint, pinchRatio, HandGrips } from './reality-tear/gesture'
 import './reality-tear/reality-tear.css'
 
 function Icon({ name }) {
@@ -12,6 +12,12 @@ function Icon({ name }) {
     arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
   }
   return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
+}
+
+// Lets go of the sheet with both hands and forgets them.
+function releaseHands(r) {
+  r.grips.reset(); r.hands = []
+  for (const slot of [0, 1]) r.engine.release(`hand-${slot}`)
 }
 
 export default function RealityTearPage() {
@@ -34,7 +40,7 @@ export default function RealityTearPage() {
       return
     }
     const r = {
-      engine, gesture: new TearGesture(), mode: 'intro', generation: 0,
+      engine, grips: new HandGrips(), mode: 'intro', generation: 0,
       stream: null, worker: null, workerReady: false, busy: false,
       hands: [], pointers: new Map(), mirror: true, lastFrame: 0, lastDetect: 0,
     }
@@ -45,20 +51,30 @@ export default function RealityTearPage() {
     const frame = now => {
       const delta = Math.min((now - (r.lastFrame || now)) / 1000, .05)
       r.lastFrame = now
-      let target = r.gesture.width, center = r.gesture.center
-      if (r.mode === 'intro') {
-        target = .24 + Math.sin(now / 2200) * .035
-        center = { x: .66, y: .46 }
+      if (r.mode === 'intro') engine.playIntro(now / 1000)
+      // Each pinching hand holds the sheet where its fingertips meet.
+      r.hands = r.grips.advance(delta)
+      const w = canvas.current.clientWidth, h = canvas.current.clientHeight
+      if (r.mode === 'live') {
+        for (const slot of [0, 1]) {
+          const key = `hand-${slot}`
+          const hand = r.hands.find(p => p.slot === slot)
+          if (hand?.pinched) {
+            if (engine.isHeld(key)) engine.moveGrab(key, hand.x * w, hand.y * h)
+            else engine.grab(key, hand.x * w, hand.y * h)
+          } else if (engine.isHeld(key)) engine.release(key)
+        }
       }
-      engine.render(now / 1000, delta, target, center)
-      r.hands.forEach((point, i) => {
-        const el = markers.current[i]
-        if (!el) return
-        el.style.transform = `translate(${point.x * canvas.current.clientWidth}px, ${point.y * canvas.current.clientHeight}px)`
-        el.dataset.pinched = point.pinched
-        el.style.opacity = r.mode === 'live' ? '1' : '0'
-      })
-      for (let i = r.hands.length; i < 2; i++) if (markers.current[i]) markers.current[i].style.opacity = '0'
+      engine.render(now / 1000, delta)
+      for (const slot of [0, 1]) {
+        const el = markers.current[slot]
+        if (!el) continue
+        const hand = r.hands.find(p => p.slot === slot)
+        el.style.opacity = hand && r.mode === 'live' ? '1' : '0'
+        if (!hand) continue
+        el.style.transform = `translate(${hand.x * w}px, ${hand.y * h}px)`
+        el.dataset.pinched = hand.pinched
+      }
       if (r.workerReady && !r.busy && r.mode === 'live' && now - r.lastDetect > 65 && video.current?.readyState >= 2) {
         r.busy = true; r.lastDetect = now
         const generation = r.generation
@@ -69,13 +85,13 @@ export default function RealityTearPage() {
             r.worker.postMessage({ type: 'frame', frame: bitmap, time: now }, [bitmap])
           }).catch(() => {
             if (r.generation === generation) {
-              r.busy = false; r.workerReady = false; r.hands = []; r.gesture.release()
+              r.busy = false; r.workerReady = false; releaseHands(r)
               setStatus('Hand tracking unavailable. Drag the screen to tear.')
             }
           })
       }
       if (r.busy && now - r.lastDetect > 6000) {
-        r.workerReady = false; r.busy = false; r.hands = []; r.gesture.release(); r.worker?.terminate(); r.worker = null
+        r.workerReady = false; r.busy = false; releaseHands(r); r.worker?.terminate(); r.worker = null
         setStatus('Hand tracking stopped. Drag the screen, or restart the camera.')
       }
       r.raf = requestAnimationFrame(frame)
@@ -101,8 +117,8 @@ export default function RealityTearPage() {
     r.stream?.getTracks().forEach(track => { track.onended = null; track.stop() })
     r.stream = null; r.worker?.terminate(); r.worker = null
     clearTimeout(r.loadTimer)
-    r.workerReady = false; r.busy = false; r.hands = []; r.pointers.clear()
-    r.gesture.release()
+    r.workerReady = false; r.busy = false; r.pointers.clear()
+    releaseHands(r)
   }
 
   async function startCamera(nextFacing = facing) {
@@ -126,7 +142,7 @@ export default function RealityTearPage() {
       await video.current.play()
       if (r.generation !== generation) return
       r.engine.setVideo(video.current, r.mirror)
-      r.mode = 'live'; r.gesture.reset(); setMode('live'); setLoading(false)
+      r.mode = 'live'; r.engine.reset(); releaseHands(r); setMode('live'); setLoading(false)
       setStatus('Loading hand tracking… You can already drag to tear.')
       stream.getVideoTracks()[0].onended = () => {
         stopResources(r); r.mode = 'intro'; r.engine.setVideo(null, false)
@@ -136,7 +152,7 @@ export default function RealityTearPage() {
         r.worker = new Worker('/hand-tracking/worker.js')
         const trackingFailed = () => {
           if (r.generation !== generation) return
-          clearTimeout(r.loadTimer); r.workerReady = false; r.busy = false; r.hands = []; r.gesture.release()
+          clearTimeout(r.loadTimer); r.workerReady = false; r.busy = false; releaseHands(r)
           r.worker?.terminate(); r.worker = null
           setStatus('Hand tracking unavailable. Drag the screen, or restart the camera.')
         }
@@ -146,18 +162,19 @@ export default function RealityTearPage() {
           if (r.generation !== generation) return
           if (data.type === 'ready') {
             clearTimeout(r.loadTimer); r.workerReady = true
-            setStatus('Show both hands. Pinch your thumbs and index fingers.')
+            setStatus('Pinch your thumb and index finger to grab reality.')
           } else if (data.type === 'hands') {
             r.busy = false
             const aspect = canvas.current.clientWidth / canvas.current.clientHeight
-            const points = data.landmarks.map(hand => {
+            r.grips.detect(data.landmarks.map(hand => {
               const p = { x: (hand[4].x + hand[8].x) / 2, y: (hand[4].y + hand[8].y) / 2 }
               return { ...cameraPoint(p, video.current.videoWidth / video.current.videoHeight, aspect, r.mirror), ratio: pinchRatio(hand) }
-            }).sort((a, b) => a.x - b.x).map((p, i) => ({ ...p, pinched: p.ratio < (r.hands[i]?.pinched ? .58 : .4) }))
-            r.hands = points
+            }))
             if (!r.pointers.size) {
-              const grabbed = r.gesture.update(points)
-              setStatus(grabbed ? 'Pull your hands apart.' : r.gesture.width > .02 ? 'Reality is open. Pinch again to pull further.' : points.length < 2 ? 'Show both hands. Pinch your thumbs and index fingers.' : 'Pinch with both hands, then pull apart.')
+              const held = r.grips.advance(0).filter(p => p.pinched).length
+              setStatus(held ? (r.engine.torn > 0 ? 'Keep pulling. Let go to leave it open.' : 'Pull to stretch it. Pull harder to tear.')
+                : r.engine.torn > 0 ? 'Reality is open. Pinch again to tear further.'
+                : data.landmarks.length ? 'Pinch your thumb and index finger to grab reality.' : 'Show your hands to the camera.')
             }
           } else if (data.type === 'error') trackingFailed()
         }
@@ -179,15 +196,15 @@ export default function RealityTearPage() {
   function preview() {
     const r = runtime.current
     if (!r) return
-    stopResources(r); r.gesture.reset(); r.mode = 'preview'; r.engine.setVideo(null, false)
-    setMode('preview'); setLoading(false); setError(''); setStatus('Drag anywhere to pull the surface apart.')
+    stopResources(r); r.engine.reset(); r.mode = 'preview'; r.engine.setVideo(null, false)
+    setMode('preview'); setLoading(false); setError(''); setStatus('Drag to pull the surface. Pull hard to tear it; shift-drag cuts.')
   }
 
   function reset() {
     const r = runtime.current
     if (!r) return
-    r.gesture.reset(); r.pointers.clear()
-    setStatus(r.mode === 'preview' ? 'Drag anywhere to pull the surface apart.' : 'Show both hands. Pinch, then pull apart.')
+    r.engine.reset(); r.pointers.clear()
+    setStatus(r.mode === 'preview' ? 'Drag to pull the surface. Pull hard to tear it; shift-drag cuts.' : 'Pinch to grab reality, then pull it apart.')
   }
 
   function stop() {
@@ -198,43 +215,44 @@ export default function RealityTearPage() {
     setMode('intro'); setLoading(false); setError(''); setStatus('')
   }
 
+  // A drag holds the sheet where it starts; a shift- or right-drag cuts it.
+  function pointerPoint(e) {
+    const box = canvas.current.getBoundingClientRect()
+    return { x: e.clientX - box.left, y: e.clientY - box.top }
+  }
+
   function pointerDown(e) {
     const r = runtime.current
-    if (!r || r.mode === 'intro' || r.pointers.size >= 2) return
+    if (!r || r.mode === 'intro') return
     e.currentTarget.setPointerCapture(e.pointerId)
-    const point = { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight }
-    if (!r.pointers.size) {
-      r.gesture.release()
-      r.dragOrigin = point; r.dragWidth = r.gesture.width
-      if (r.gesture.width < .01) r.gesture.center = { x: clamp(point.x, .2, .8), y: clamp(point.y, .2, .8) }
-    }
-    r.pointers.set(e.pointerId, { ...point, pinched: true })
-    if (r.pointers.size === 2) r.gesture.update([...r.pointers.values()])
+    const p = pointerPoint(e)
+    const cutting = e.button === 2 || e.shiftKey
+    r.pointers.set(e.pointerId, { ...p, cutting })
+    if (!cutting) r.engine.grab(`pointer-${e.pointerId}`, p.x, p.y)
   }
 
   function pointerMove(e) {
     const r = runtime.current
-    if (!r?.pointers.has(e.pointerId)) return
-    const p = { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight, pinched: true }
-    r.pointers.set(e.pointerId, p)
-    if (r.pointers.size === 2) r.gesture.update([...r.pointers.values()])
-    else r.gesture.width = Math.max(r.gesture.width, clamp(r.dragWidth + Math.hypot(p.x - r.dragOrigin.x, (p.y - r.dragOrigin.y) * .6) * 1.65, 0, .86))
-    setStatus('Keep pulling. Release to leave the tear open.')
+    const pointer = r?.pointers.get(e.pointerId)
+    if (!pointer) return
+    const p = pointerPoint(e)
+    if (pointer.cutting) r.engine.cut(pointer.x, pointer.y, p.x, p.y)
+    else r.engine.moveGrab(`pointer-${e.pointerId}`, p.x, p.y)
+    r.pointers.set(e.pointerId, { ...p, cutting: pointer.cutting })
+    setStatus(pointer.cutting ? 'Cutting.' : r.engine.torn > 0 ? 'Keep pulling. Let go to leave it open.' : 'Pull harder to tear it.')
   }
 
   function pointerUp(e) {
     const r = runtime.current
     if (!r?.pointers.has(e.pointerId)) return
-    r.pointers.delete(e.pointerId); r.gesture.release()
-    if (r.pointers.size) {
-      r.dragOrigin = [...r.pointers.values()][0]; r.dragWidth = r.gesture.width
-    }
-    setStatus('Reality is open. Drag again to pull further.')
+    r.pointers.delete(e.pointerId)
+    r.engine.release(`pointer-${e.pointerId}`)
+    if (r.engine.torn > 0) setStatus('Reality is open. Drag again to tear further.')
   }
 
   return <main className={`reality-tear reality-tear--${mode}`}>
     <video ref={video} muted playsInline autoPlay className="rt-video" aria-hidden="true" />
-    <canvas ref={canvas} className="rt-canvas" aria-label="Interactive reality tear. Drag to open the surface." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} />
+    <canvas ref={canvas} className="rt-canvas" aria-label="Interactive reality tear. Drag to pull the surface apart." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onContextMenu={e => e.preventDefault()} />
     <div className="rt-vignette" />
     <header className="rt-header">
       <a href="/" className="rt-wordmark" aria-label="Back to experiments"><span className="rt-symbol">⸬</span> REALITY<span className="rt-wordmark-light"> / TEAR</span></a>
